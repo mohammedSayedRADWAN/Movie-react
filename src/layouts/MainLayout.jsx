@@ -57,6 +57,21 @@ export default function MainLayout() {
 									Users
 								</Link>
 							</NavigationMenuItem>
+							<NavigationMenuItem>
+								<Link to='login' className='font-medium hover:text-blue-600'>
+									Login
+								</Link>
+							</NavigationMenuItem>
+							<NavigationMenuItem>
+								<Link to='register' className='font-medium hover:text-blue-600'>
+									Register
+								</Link>
+							</NavigationMenuItem>
+							<NavigationMenuItem>
+								<Link to='store' className='font-medium hover:text-blue-600'>
+									Store
+								</Link>
+							</NavigationMenuItem>
 						</NavigationMenuList>
 					</NavigationMenu>
 				</div>

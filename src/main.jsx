@@ -8,6 +8,11 @@ import MainLayout from './layouts/MainLayout';
 import NotFound404 from './pages/NotFound404';
 import UserPage from './pages/UserPage';
 import UsersPage from './pages/UsersPage';
+import LoginPage from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
+import StoreManagement from './StoreManagement';
+import { store } from './redux/store';
+import { Provider } from 'react-redux';
 
 const router = createBrowserRouter(
 	[
@@ -23,6 +28,18 @@ const router = createBrowserRouter(
 				{
 					path: '/users/',
 					element: <UsersPage />,
+				},
+				{
+					path: '/login/',
+					element: <LoginPage />,
+				},
+				{
+					path: '/register/',
+					element: <RegisterPage />,
+				},
+				{
+					path: '/store/',
+					element: <StoreManagement />,
 				},
 				// Dynamic route
 				{
@@ -46,7 +63,9 @@ const router = createBrowserRouter(
 createRoot(document.getElementById('root')).render(
 	<StrictMode>
 		<ThemeProvider defaultTheme='light' storageKey='vite-ui-theme'>
-			<RouterProvider router={router} />
+			<Provider store={store}>
+				<RouterProvider router={router} />
+			</Provider>
 		</ThemeProvider>
 	</StrictMode>,
 );
