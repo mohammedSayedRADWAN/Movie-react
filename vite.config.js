@@ -11,5 +11,5 @@ export default defineConfig({
 			'@': new URL('./src', import.meta.url).pathname,
 		},
 	},
-	base: '/test-deploy/', // your GitHub repo name
+	base: '/react-vite-rr7-ghp-deploy/', // your GitHub repo name
 });

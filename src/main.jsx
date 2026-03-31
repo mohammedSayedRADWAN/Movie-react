@@ -56,7 +56,7 @@ const router = createBrowserRouter(
 		},
 	],
 	{
-		basename: '/test-deploy', // must match your repo name
+		basename: '/react-vite-rr7-ghp-deploy', // must match your repo name
 	},
 );
 
