@@ -1,108 +1,123 @@
-import { Button } from '@/components/ui/button';
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from '@/components/ui/card';
-import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
+import React from 'react';
+import * as z from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Input } from '@/components/ui/input';
-import { useActionState } from 'react';
-import { useFormStatus } from 'react-dom';
-import { z } from 'zod';
+import { useNavigate } from 'react-router';
 
-// --- 1. SCHEMA ---
 const loginSchema = z.object({
-	email: z.string().email('Invalid email format.'),
-	password: z.string().min(6, 'Password must be at least 6 characters.'),
+	email: z.string().email('Invalid email format'),
+	password: z.string().min(8, 'Password must be at least 8 characters'),
 });
 
-// --- 2. ACTION FUNCTION ---
-async function loginAction(prevState, formData) {
-	const rawData = Object.fromEntries(formData);
-	const validatedFields = loginSchema.safeParse(rawData);
-
-	if (!validatedFields.success) {
-		return {
-			success: false,
-			errors: validatedFields.error.flatten().fieldErrors,
-			message: 'Validation failed. Please check your inputs.',
-		};
-	}
-
-	// Simulate Network Request
-	await new Promise((resolve) => setTimeout(resolve, 2000));
-	return { success: true, errors: null, message: 'Welcome back!' };
-}
-
-// --- 3. SUBMIT BUTTON COMPONENT ---
-function SubmitButton() {
-	const { pending } = useFormStatus();
-	return (
-		<Field className='pt-2'>
-			<Button type='submit' className='w-full' disabled={pending}>
-				{pending ? 'Processing...' : 'Secure Login'}
-			</Button>
-		</Field>
-	);
-}
-
-// --- 4. MAIN FORM COMPONENT ---
-export default function LoginPage() {
-	const [state, formAction, isPending] = useActionState(loginAction, {
-		success: false,
-		errors: null,
-		message: null,
+const LoginPage = () => {
+	const navigate = useNavigate();
+	const {
+		register,
+		handleSubmit,
+		formState: { errors, isSubmitting },
+		setError,
+	} = useForm({
+		resolver: zodResolver(loginSchema),
 	});
 
+	const onSubmit = (data) => {
+		const users = JSON.parse(localStorage.getItem('users')) || [];
+		const user = users.find((u) => u.email === data.email && u.password === data.password);
+
+		if (!user) {
+			setError('root', {
+				type: 'manual',
+				message: 'Invalid email or password',
+			});
+			return;
+		}
+
+		// Simulate login
+		localStorage.setItem('currentUser', JSON.stringify(user));
+		navigate('/');
+	};
+
 	return (
-		<Card className='w-full max-w-md mx-auto mt-10'>
-			<CardHeader>
-				<CardTitle>System Login</CardTitle>
-				<CardDescription>Enter your credentials to access your account</CardDescription>
-			</CardHeader>
-			<CardContent>
-				<form action={formAction}>
-					<FieldGroup className='space-y-4'>
-						{/* Global Message Display for Success or Server Errors */}
-						{state.message && (
-							<div
-								className={`text-sm font-medium pb-2 ${state.success ? 'text-green-600' : 'text-red-600'}`}>
-								{state.message}
+		<div className='min-h-screen relative overflow-hidden font-sans -m-4'>
+			{/* Background Image */}
+			<img
+				src='/avatar_bg.jpg'
+				className='absolute inset-0 w-full h-full object-cover'
+				alt='Background'
+			/>
+
+			<div className='absolute inset-0 bg-black/60' />
+
+			<div className='relative z-10 flex min-h-screen items-center justify-center lg:justify-end lg:pr-32 p-6'>
+				<div
+					style={{ backgroundColor: 'rgba(25, 25, 25, 0.85)' }}
+					className='backdrop-blur-xl p-10 rounded-3xl w-full max-w-md shadow-2xl border border-white/10'>
+					<h2 className='text-3xl font-bold mb-6 text-center text-white'>Welcome Back</h2>
+
+					<form onSubmit={handleSubmit(onSubmit)} className='space-y-5'>
+						{/* global error */}
+						{errors.root && (
+							<div className='bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-xl text-sm text-center'>
+								{errors.root.message}
 							</div>
 						)}
 
-						<Field>
-							<FieldLabel htmlFor='email'>Email</FieldLabel>
+						{/* email */}
+						<div className='space-y-1'>
 							<Input
-								id='email'
-								name='email'
-								type='email'
-								placeholder='instructor@example.com'
-								disabled={isPending}
+								placeholder='Email'
+								className='h-12 !text-lg '
+								style={{
+									backgroundColor: 'rgba(255,255,255,0.05)',
+									color: 'white',
+									borderColor: 'rgba(255,255,255,0.1)',
+								}}
+								{...register('email')}
 							/>
-							{state.errors?.email && (
-								<FieldDescription className='text-red-600'>
-									{state.errors.email[0]}
-								</FieldDescription>
+							{errors.email && (
+								<p className='text-red-400 text-xs mt-1'>{errors.email?.message}</p>
 							)}
-						</Field>
+						</div>
 
-						<Field>
-							<FieldLabel htmlFor='password'>Password</FieldLabel>
-							<Input id='password' name='password' type='password' disabled={isPending} />
-							{state.errors?.password && (
-								<FieldDescription className='text-red-600'>
-									{state.errors.password[0]}
-								</FieldDescription>
+						{/* pass */}
+						<div className='space-y-1'>
+							<Input
+								type='password'
+								placeholder='Password'
+								className='h-12 !text-lg '
+								style={{
+									backgroundColor: 'rgba(255,255,255,0.05)',
+									color: 'white',
+									borderColor: 'rgba(255,255,255,0.1)',
+								}}
+								{...register('password')}
+							/>
+							{errors.password && (
+								<p className='text-red-400 text-xs mt-1'>{errors.password?.message}</p>
 							)}
-						</Field>
+						</div>
 
-						<SubmitButton />
-					</FieldGroup>
-				</form>
-			</CardContent>
-		</Card>
+						<button
+							disabled={isSubmitting}
+							style={{ backgroundColor: 'oklch(0.627 0.265 303.9)', color: '#191919' }}
+							className='w-full font-bold py-3 rounded-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] mt-4 shadow-lg'>
+							{isSubmitting ? 'Logging in...' : 'Sign In'}
+						</button>
+
+						<div className='text-center mt-4 text-sm text-gray-400'>
+							Don't have an account?{' '}
+							<span
+								className='text-purple-400 cursor-pointer hover:underline'
+								onClick={() => navigate('/register')}>
+								Register
+							</span>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
 	);
-}
+};
+
+export default LoginPage;
