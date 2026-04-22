@@ -3,7 +3,6 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router';
 import { ThemeProvider } from './components/theme-provider';
-import App from './App';
 import MainLayout from './layouts/MainLayout';
 import NotFound404 from './pages/NotFound404';
 import UserPage from './pages/UserPage';
@@ -13,6 +12,8 @@ import { RegisterPage } from './pages/RegisterPage';
 import StoreManagement from './StoreManagement';
 import { store } from './redux/store';
 import { Provider } from 'react-redux';
+import HomePage from './pages/HomePage';
+import SearchResultsPage from './pages/SearchResultsPage';
 
 const router = createBrowserRouter(
 	[
@@ -23,7 +24,7 @@ const router = createBrowserRouter(
 				// Root Route
 				{
 					index: true,
-					element: <App />,
+					element: <HomePage />,
 				},
 				{
 					path: '/users/',
@@ -41,6 +42,10 @@ const router = createBrowserRouter(
 					path: '/store/',
 					element: <StoreManagement />,
 				},
+				{
+					path: '/search',
+					element: <SearchResultsPage />,
+				},
 				// Dynamic route
 				{
 					path: '/users/:id',
@@ -51,12 +56,12 @@ const router = createBrowserRouter(
 
 		// Wildcard Route 404
 		{
-			path: '*', // Wildcard Route 404: match all unknown urls
+			path: '*',
 			element: <NotFound404 />,
 		},
 	],
 	{
-		basename: '/react-vite-rr7-ghp-deploy', // must match your repo name
+		basename: '/react-vite-rr7-ghp-deploy',
 	},
 );
 
