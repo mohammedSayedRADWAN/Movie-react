@@ -10,6 +10,7 @@ import UserPage from './pages/UserPage';
 import UsersPage from './pages/UsersPage';
 import LoginPage from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
+import MovieDetailsPage from './pages/MovieDetailsPage';
 import StoreManagement from './StoreManagement';
 import { store } from './redux/store';
 import { Provider } from 'react-redux';
@@ -45,6 +46,10 @@ const router = createBrowserRouter(
 				{
 					path: '/users/:id',
 					element: <UserPage />,
+				},
+				{
+					path: '/movie/:id',
+					element: <MovieDetailsPage />,
 				},
 			],
 		},
