@@ -1,20 +1,23 @@
 import './index.css';
-import { StrictMode } from 'react';
+import { StrictMode, lazy } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router';
 import { ThemeProvider } from './components/theme-provider';
 import MainLayout from './layouts/MainLayout';
-import NotFound404 from './pages/NotFound404';
-import UserPage from './pages/UserPage';
-import UsersPage from './pages/UsersPage';
-import LoginPage from './pages/LoginPage';
-import { RegisterPage } from './pages/RegisterPage';
-import MovieDetailsPage from './pages/MovieDetailsPage';
-import StoreManagement from './StoreManagement';
 import { store } from './redux/store';
 import { Provider } from 'react-redux';
-import HomePage from './pages/HomePage';
-import SearchResultsPage from './pages/SearchResultsPage';
+
+// Lazy loading components
+const HomePage = lazy(() => import('./pages/HomePage'));
+const UsersPage = lazy(() => import('./pages/UsersPage'));
+const UserPage = lazy(() => import('./pages/UserPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const MovieDetailsPage = lazy(() => import('./pages/MovieDetailsPage'));
+const SearchResultsPage = lazy(() => import('./pages/SearchResultsPage'));
+const WishlistPage = lazy(() => import('./pages/WishlistPage'));
+const StoreManagement = lazy(() => import('./StoreManagement'));
+const NotFound404 = lazy(() => import('./pages/NotFound404'));
 
 const router = createBrowserRouter(
 	[
@@ -22,7 +25,6 @@ const router = createBrowserRouter(
 			path: '/',
 			element: <MainLayout />,
 			children: [
-				// Root Route
 				{
 					index: true,
 					element: <HomePage />,
@@ -40,6 +42,10 @@ const router = createBrowserRouter(
 					element: <RegisterPage />,
 				},
 				{
+					path: '/wishlist/',
+					element: <WishlistPage />,
+				},
+				{
 					path: '/store/',
 					element: <StoreManagement />,
 				},
@@ -47,7 +53,6 @@ const router = createBrowserRouter(
 					path: '/search',
 					element: <SearchResultsPage />,
 				},
-				// Dynamic route
 				{
 					path: '/users/:id',
 					element: <UserPage />,
@@ -58,8 +63,6 @@ const router = createBrowserRouter(
 				},
 			],
 		},
-
-		// Wildcard Route 404
 		{
 			path: '*',
 			element: <NotFound404 />,

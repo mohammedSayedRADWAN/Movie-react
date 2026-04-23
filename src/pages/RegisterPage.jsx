@@ -1,149 +1,254 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useNavigate } from 'react-router';
-import { Input } from '@/components/ui/input';
+import { 
+  Box, 
+  Container, 
+  Typography, 
+  TextField, 
+  Button, 
+  IconButton, 
+  InputAdornment, 
+  Alert,
+  Paper,
+  ThemeProvider,
+  createTheme,
+  CssBaseline,
+  CircularProgress
+} from '@mui/material';
+import { 
+  Visibility, 
+  VisibilityOff, 
+  MovieFilter,
+  ArrowBack
+} from '@mui/icons-material';
+import { useAuthStore } from '@/zustand/useAuthStore';
+
+// Dark Cinematic Theme for MUI
+const darkTheme = createTheme({
+  palette: {
+    mode: 'dark',
+    primary: {
+      main: '#e50914', // Netflix Red
+    },
+    background: {
+      default: '#0a0a0a',
+      paper: '#141414',
+    },
+    text: {
+      primary: '#ffffff',
+      secondary: '#b3b3b3',
+    },
+  },
+  typography: {
+    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+    h4: {
+      fontWeight: 900,
+      letterSpacing: '-0.02em',
+    },
+  },
+  shape: {
+    borderRadius: 12,
+  },
+});
 
 const registerSchema = z
-	.object({
-		name: z
-			.string()
-			.min(3, 'Name must be at least 3 characters')
-			.regex(/^[A-Za-z ]+$/, 'Only letters allowed'),
-		email: z.string().email('Invalid email format'),
-		password: z
-			.string()
-			.min(8, 'Password must be at least 8 characters')
-			.regex(/[A-Z]/, 'Must include uppercase')
-			.regex(/[0-9]/, 'Must include a number')
-			.regex(/[@$!%*?&]/, 'Special character required'),
-		confirmPassword: z.string(),
-	})
-	.refine((data) => data.password === data.confirmPassword, {
-		message: "Passwords don't match",
-		path: ['confirmPassword'],
-	});
+  .object({
+    username: z.string().min(3, 'Username must be at least 3 characters'),
+    email: z.string().email('Invalid email address'),
+    password: z
+      .string()
+      .min(8, 'Password must be at least 8 characters')
+      .regex(/[A-Z]/, 'Must include at least one uppercase letter')
+      .regex(/[0-9]/, 'Must include at least one number')
+      .regex(/[@$!%*?&]/, 'Must include at least one special character'),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  });
 
-export const RegisterPage = () => {
-	const navigate = useNavigate();
-	const {
-		register,
-		handleSubmit,
-		setError,
-		formState: { errors, isSubmitting },
-	} = useForm({
-		resolver: zodResolver(registerSchema),
-	});
+const RegisterPage = () => {
+  const navigate = useNavigate();
+  const loginAction = useAuthStore((state) => state.login);
+  const [showPassword, setShowPassword] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-	const onSubmit = (data) => {
-		const users = JSON.parse(localStorage.getItem('users')) || [];
-		if (users.find((u) => u.email === data.email)) {
-			setError('email', { message: 'Email already exists' });
-			return;
-		}
-		users.push({ name: data.name, email: data.email, password: data.password });
-		localStorage.setItem('users', JSON.stringify(users));
-		navigate('/login');
-	};
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(registerSchema),
+  });
 
-	return (
-		<div className='min-h-screen relative flex items-center justify-center p-4 bg-[#050000] -m-4'>
-			{/* Background Decoration */}
-			<div className='absolute top-0 left-0 w-full h-full overflow-hidden z-0'>
-				<div className='absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-red-600/10 blur-[120px] rounded-full' />
-				<div className='absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-red-900/20 blur-[120px] rounded-full' />
-			</div>
+  const onSubmit = async (data) => {
+    setLoading(true);
+    try {
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      
+      const users = JSON.parse(localStorage.getItem('users')) || [];
+      if (users.find((u) => u.email === data.email)) {
+        throw new Error('Email already registered');
+      }
 
-			<div className='relative z-10 w-full max-w-[1000px] grid lg:grid-cols-2 bg-[#1a0505]/80 border border-red-900/30 rounded-[2.5rem] overflow-hidden shadow-[0_0_50px_rgba(220,38,38,0.15)] backdrop-blur-md'>
-				{/* Left Side */}
-				<div className='hidden lg:flex flex-col justify-center p-12 bg-gradient-to-br from-red-700 to-red-950 text-white relative'>
-					<h1 className='text-5xl font-bold leading-tight mb-6'>
-						Join the <br /> Elite Circle.
-					</h1>
-					<p className='text-red-200 text-lg mb-8'>
-						Access premium features and secure your data with our advanced protocol.
-					</p>
-					<div className='space-y-4'>
-						{['Military Grade Security', 'Real-time Analytics', 'Priority Support'].map(
-							(text, i) => (
-								<div key={i} className='flex items-center gap-3'>
-									<div className='w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-xs'>
-										✓
-									</div>
-									<span className='font-medium text-red-50'>{text}</span>
-								</div>
-							),
-						)}
-					</div>
-				</div>
+      const newUser = { id: Date.now(), username: data.username, email: data.email };
+      users.push({ ...newUser, password: data.password });
+      localStorage.setItem('users', JSON.stringify(users));
+      
+      setSuccess(true);
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-				{/* Form Side */}
-				<div className='p-8 lg:p-12'>
-					<div className='mb-8'>
-						<h2 className='text-3xl font-bold text-white mb-2'>Create Account</h2>
-						<p className='text-red-200/50'>Experience the power of precision.</p>
-					</div>
+  return (
+    <ThemeProvider theme={darkTheme}>
+      <CssBaseline />
+      <Box 
+        sx={{ 
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'radial-gradient(circle at top left, rgba(229, 9, 20, 0.15) 0%, transparent 40%), radial-gradient(circle at bottom right, rgba(229, 9, 20, 0.05) 0%, transparent 40%)',
+          py: 4,
+          px: 2
+        }}
+      >
+        <Container maxWidth="sm">
+          <Paper 
+            elevation={24}
+            sx={{ 
+              p: { xs: 3, md: 6 },
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 3,
+              background: 'rgba(20, 20, 20, 0.8)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: 4
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <IconButton onClick={() => navigate(-1)} color="inherit">
+                    <ArrowBack />
+                </IconButton>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <MovieFilter color="primary" sx={{ fontSize: 32 }} />
+                    <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                        <span style={{ color: '#e50914' }}>MOVIE</span>APP
+                    </Typography>
+                </Box>
+                <Box sx={{ width: 40 }} /> {/* Spacer */}
+            </Box>
 
-					<form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
-						<div className='space-y-4'>
-							<div className='space-y-1.5'>
-								<label className='text-sm font-medium text-red-200/70 ml-1'>Full Name</label>
-								<Input
-									{...register('name')}
-									placeholder='Name'
-									className={`bg-red-950/20 border-red-900/50 text-white h-12 focus:border-red-500 transition-all ${errors.name ? 'border-red-500' : ''}`}
-								/>
-								{errors.name && <p className='text-red-500 text-xs'>{errors.name.message}</p>}
-							</div>
-							<div className='space-y-1.5'>
-								<label className='text-sm font-medium text-red-200/70 ml-1'>Email</label>
-								<Input
-									{...register('email')}
-									placeholder='Email'
-									className={`bg-red-950/20 border-red-900/50 text-white h-12 focus:border-red-500 transition-all ${errors.email ? 'border-red-500' : ''}`}
-								/>
-								{errors.email && <p className='text-red-500 text-xs'>{errors.email.message}</p>}
-							</div>
-							<div className='grid sm:grid-cols-2 gap-4'>
-								<div className='space-y-1.5'>
-									<label className='text-sm font-medium text-red-200/70 ml-1'>Password</label>
-									<Input
-										type='password'
-										{...register('password')}
-										placeholder='••••'
-										className='bg-red-950/20 border-red-900/50 text-white h-12'
-									/>
-								</div>
-								<div className='space-y-1.5'>
-									<label className='text-sm font-medium text-red-200/70 ml-1'>Confirm</label>
-									<Input
-										type='password'
-										{...register('confirmPassword')}
-										placeholder='••••'
-										className='bg-red-950/20 border-red-900/50 text-white h-12'
-									/>
-								</div>
-							</div>
-						</div>
+            <Box sx={{ textAlign: 'center', mb: 2 }}>
+              <Typography variant="h4" gutterBottom>
+                Create Account
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Join our elite movie community today
+              </Typography>
+            </Box>
 
-						<button className='w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-red-600/20 mt-6 active:scale-95'>
-							{isSubmitting ? 'Processing...' : 'Register Now'}
-						</button>
+            {success && (
+              <Alert severity="success" sx={{ borderRadius: 2 }}>
+                Account created successfully! Redirecting to login...
+              </Alert>
+            )}
 
-						<p className='text-center text-sm text-red-200/50 mt-4'>
-							Already a member?{' '}
-							<button
-								onClick={() => navigate('/login')}
-								className='text-red-500 font-bold hover:underline'>
-								Sign in
-							</button>
-						</p>
-					</form>
-				</div>
-			</div>
-		</div>
-	);
+            <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <TextField
+                fullWidth
+                label="Username"
+                {...register('username')}
+                error={!!errors.username}
+                helperText={errors.username?.message}
+                variant="outlined"
+              />
+
+              <TextField
+                fullWidth
+                label="Email Address"
+                {...register('email')}
+                error={!!errors.email}
+                helperText={errors.email?.message}
+                variant="outlined"
+              />
+
+              <TextField
+                fullWidth
+                label="Password"
+                type={showPassword ? 'text' : 'password'}
+                {...register('password')}
+                error={!!errors.password}
+                helperText={errors.password?.message}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+
+              <TextField
+                fullWidth
+                label="Confirm Password"
+                type="password"
+                {...register('confirmPassword')}
+                error={!!errors.confirmPassword}
+                helperText={errors.confirmPassword?.message}
+              />
+
+              <Button
+                fullWidth
+                size="large"
+                type="submit"
+                variant="contained"
+                disabled={loading || success}
+                sx={{ 
+                  py: 1.5, 
+                  fontWeight: 'bold',
+                  fontSize: '1rem',
+                  textTransform: 'none',
+                  boxShadow: '0 8px 16px rgba(229, 9, 20, 0.3)',
+                  '&:hover': {
+                    boxShadow: '0 12px 20px rgba(229, 9, 20, 0.4)',
+                  }
+                }}
+              >
+                {loading ? <CircularProgress size={24} color="inherit" /> : 'Register Now'}
+              </Button>
+
+              <Typography variant="body2" align="center" sx={{ mt: 2, color: 'text.secondary' }}>
+                Already have an account?{' '}
+                <Button 
+                  onClick={() => navigate('/login')} 
+                  sx={{ textTransform: 'none', fontWeight: 'bold' }}
+                >
+                  Sign In
+                </Button>
+              </Typography>
+            </form>
+          </Paper>
+        </Container>
+      </Box>
+    </ThemeProvider>
+  );
 };
 
 export default RegisterPage;

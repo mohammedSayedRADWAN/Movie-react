@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { 
     Star, 
@@ -11,14 +11,23 @@ import {
     TrendingUp,
     Users,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    Video
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { 
+    Dialog, 
+    DialogContent, 
+    DialogHeader, 
+    DialogTitle, 
+    DialogTrigger 
+} from '@/components/ui/dialog';
 import { useMovieDetails } from '@/hooks/useMovieDetails';
 import { useMovieCredits } from '@/hooks/useMovieCredits';
 import { useSimilarMovies } from '@/hooks/useSimilarMovies';
+import { useMovieVideos } from '@/hooks/useMovieVideos';
 import { MovieRow } from '@/components/MovieRow';
 
 const MovieDetailsPage = () => {
@@ -26,9 +35,11 @@ const MovieDetailsPage = () => {
     const navigate = useNavigate();
     
     const { movie, loading: loadingMovie, error: movieError } = useMovieDetails(id);
-    const { credits, loading: loadingCredits } = useMovieCredits(id);
+    const { credits } = useMovieCredits(id);
     const { movies: similarMovies, loading: loadingSimilar } = useSimilarMovies(id);
+    const { videos } = useMovieVideos(id);
 
+    const [isTrailerOpen, setIsTrailerOpen] = useState(false);
     const castRowRef = useRef(null);
 
     const scrollCast = (direction) => {
@@ -64,6 +75,9 @@ const MovieDetailsPage = () => {
         );
     }
 
+    // Find first YouTube trailer
+    const trailer = videos?.find(v => v.type === 'Trailer' && v.site === 'YouTube') || videos?.[0];
+
     const backdropUrl = movie.backdrop_path 
         ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}` 
         : null;
@@ -85,8 +99,7 @@ const MovieDetailsPage = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/60 to-transparent" />
                 <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/40 to-transparent" />
                 
-                <div className="absolute bottom-0 left-0 w-full p-6 md:p-12 lg:p-20 flex flex-col md:flex-row gap-8 items-end md:items-start">
-                    {/* Poster - hidden on mobile hero for cleaner look */}
+                <div className="absolute bottom-0 left-0 w-full p-6 md:p-12 lg:p-20 flex flex-col md:flex-row gap-8 items-end md:items-start text-left">
                     <div className="hidden md:block w-64 rounded-xl overflow-hidden shadow-2xl border border-white/10 shrink-0 transform -translate-y-12">
                         <img src={posterUrl} alt={movie.title} className="w-full h-full object-cover" />
                     </div>
@@ -111,7 +124,7 @@ const MovieDetailsPage = () => {
                                 <span className="text-gray-400 text-sm">• {movie.vote_count} votes</span>
                             </div>
                             
-                            <h1 className="text-4xl md:text-6xl font-black tracking-tight">{movie.title}</h1>
+                            <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-tight">{movie.title}</h1>
                             {movie.tagline && (
                                 <p className="text-xl text-gray-400 italic">"{movie.tagline}"</p>
                             )}
@@ -130,9 +143,39 @@ const MovieDetailsPage = () => {
                         </div>
 
                         <div className="flex flex-wrap gap-4 pt-4">
-                            <Button className="bg-[#e50914] hover:bg-red-700 text-white rounded-full px-8 h-12 text-md font-bold transition-all transform hover:scale-105">
-                                <Play className="w-5 h-5 mr-2 fill-current" /> Watch Trailer
-                            </Button>
+                            <Dialog open={isTrailerOpen} onOpenChange={setIsTrailerOpen}>
+                                <DialogTrigger asChild>
+                                    <Button className="bg-[#e50914] hover:bg-red-700 text-white rounded-full px-8 h-12 text-md font-bold transition-all transform hover:scale-105">
+                                        <Play className="w-5 h-5 mr-2 fill-current" /> Watch Trailer
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-4xl bg-black/95 border-white/10 p-0 overflow-hidden sm:max-w-4xl">
+                                    <DialogHeader className="p-4 bg-[#0a0a0a]">
+                                        <DialogTitle className="text-white flex items-center gap-2">
+                                            <Video className="w-5 h-5 text-red-600" /> {movie.title} - Official Trailer
+                                        </DialogTitle>
+                                    </DialogHeader>
+                                    <div className="aspect-video w-full">
+                                        {trailer ? (
+                                            <iframe
+                                                width="100%"
+                                                height="100%"
+                                                src={`https://www.youtube.com/embed/${trailer.key}?autoplay=1`}
+                                                title="YouTube video player"
+                                                frameBorder="0"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                allowFullScreen
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 gap-4">
+                                                <Video className="w-12 h-12" />
+                                                <p>Trailer not available at the moment.</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </DialogContent>
+                            </Dialog>
+
                             <Button variant="outline" className="border-white/20 hover:bg-white/10 text-white rounded-full px-8 h-12">
                                 <Plus className="w-5 h-5 mr-2" /> Add to List
                             </Button>
@@ -148,7 +191,7 @@ const MovieDetailsPage = () => {
             <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20 py-16 space-y-20">
                 
                 {/* Overview */}
-                <section className="grid lg:grid-cols-3 gap-12">
+                <section className="grid lg:grid-cols-3 gap-12 text-left">
                     <div className="lg:col-span-2 space-y-6">
                         <div className="flex items-center gap-2">
                             <div className="w-1 h-8 bg-[#e50914] rounded-full" />
@@ -182,16 +225,15 @@ const MovieDetailsPage = () => {
                 </section>
 
                 {/* Cast Section */}
-                <section className="space-y-8">
+                <section className="space-y-8 text-left">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <div className="w-1 h-8 bg-[#e50914] rounded-full" />
                             <h3 className="text-2xl font-bold">Top Cast</h3>
                             <Badge variant="outline" className="ml-2 border-white/20 text-gray-400">
-                                <Users className="w-3 h-3 mr-1" /> {credits.cast?.length} Members
+                                <Users className="w-3 h-3 mr-1" /> {credits?.cast?.length || 0} Members
                             </Badge>
                         </div>
-                        {/* Scroll Buttons */}
                         <div className="flex gap-2">
                             <button
                                 onClick={() => scrollCast('left')}
@@ -213,7 +255,7 @@ const MovieDetailsPage = () => {
                         className="flex gap-6 overflow-x-auto pb-4"
                         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
-                        {credits.cast?.slice(0, 15).map(person => (
+                        {credits?.cast?.slice(0, 15).map(person => (
                             <div key={person.id} className="group shrink-0 w-32 md:w-40">
                                 <div className="aspect-[2/3] rounded-2xl overflow-hidden mb-3 border border-white/5 bg-gray-900 shadow-xl">
                                     <img 
@@ -222,7 +264,7 @@ const MovieDetailsPage = () => {
                                         alt={person.name} 
                                     />
                                 </div>
-                                <p className="font-bold text-sm text-white line-clamp-1 group-hover:text-red-500 transition-colors">{person.name}</p>
+                                <p className="font-bold text-sm text-white line-clamp-1 group-hover:text-red-500 transition-colors uppercase">{person.name}</p>
                                 <p className="text-xs text-gray-500 line-clamp-1">{person.character}</p>
                             </div>
                         ))}
@@ -230,7 +272,7 @@ const MovieDetailsPage = () => {
                 </section>
 
                 {/* Similar Movies Row */}
-                <section>
+                <section className="text-left">
                     <MovieRow 
                         title="More Like This" 
                         movies={similarMovies} 
