@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { 
     Star, 
@@ -8,162 +8,235 @@ import {
     Plus, 
     Share2, 
     ArrowLeft,
-    ShieldAlert,
-    UserCircle2
+    TrendingUp,
+    Users,
+    ChevronLeft,
+    ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useMovieDetails } from '@/hooks/useMovieDetails';
+import { useMovieCredits } from '@/hooks/useMovieCredits';
+import { useSimilarMovies } from '@/hooks/useSimilarMovies';
+import { MovieRow } from '@/components/MovieRow';
 
 const MovieDetailsPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    
+    const { movie, loading: loadingMovie, error: movieError } = useMovieDetails(id);
+    const { credits, loading: loadingCredits } = useMovieCredits(id);
+    const { movies: similarMovies, loading: loadingSimilar } = useSimilarMovies(id);
 
-    // Mock data for a horror movie theme
-    const movie = {
-        title: "The Sobrenatural Initiation",
-        tagline: "Some doors should never be opened.",
-        rating: "8.4",
-        year: "2026",
-        duration: "2h 14m",
-        genre: ["Horror", "Mystery", "Thriller"],
-        synopsis: "When a group of architecture students discovers a sealed chamber in the basement of a 19th-century mental asylum, they unwittingly trigger a series of events that blur the line between the physical world and the supernatural realm. As the initiation begins, they must solve the building's darkest secret or become part of its history forever.",
-        director: "E. L. Dash",
-        cast: [
-            { name: "John Weaver", role: "Alex", image: "https://api.dicebear.com/7.x/avataaars/svg?seed=John" },
-            { name: "Sarah Thorne", role: "Elena", image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah" },
-            { name: "Marcus Vane", role: "Professor Silas", image: "https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus" },
-        ],
-        backdrop: "/movie_banner.jpg"
+    const castRowRef = useRef(null);
+
+    const scrollCast = (direction) => {
+        if (castRowRef.current) {
+            const scrollAmount = 600;
+            castRowRef.current.scrollBy({ 
+                left: direction === 'left' ? -scrollAmount : scrollAmount, 
+                behavior: 'smooth' 
+            });
+        }
     };
 
+    if (loadingMovie) {
+        return (
+            <div className="min-h-screen bg-[#0a0a0a] text-white p-8">
+                <Skeleton className="w-full h-[60vh] rounded-2xl bg-gray-900" />
+                <div className="mt-8 space-y-4">
+                    <Skeleton className="w-1/3 h-12 bg-gray-900" />
+                    <Skeleton className="w-full h-24 bg-gray-900" />
+                </div>
+            </div>
+        );
+    }
+
+    if (movieError || !movie) {
+        return (
+            <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center text-white p-4">
+                <h2 className="text-2xl font-bold mb-4">Oops! Movie not found.</h2>
+                <Button onClick={() => navigate('/')} style={{ backgroundColor: '#e50914' }}>
+                    Back to Home
+                </Button>
+            </div>
+        );
+    }
+
+    const backdropUrl = movie.backdrop_path 
+        ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}` 
+        : null;
+    const posterUrl = movie.poster_path 
+        ? `${import.meta.env.VITE_TMDB_IMAGE_URL}${movie.poster_path}` 
+        : 'https://via.placeholder.com/500x750?text=No+Poster';
+
     return (
-        <div className="min-h-screen bg-[#050000] text-white -m-4">
+        <div className="min-h-screen bg-[#0a0a0a] text-white -m-4">
             {/* Hero Section */}
-            <div className="relative h-[70vh] w-full overflow-hidden">
-                <img 
-                    src={movie.backdrop} 
-                    className="w-full h-full object-cover opacity-60"
-                    alt={movie.title} 
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#050000] via-[#050000]/40 to-transparent" />
+            <div className="relative h-[80vh] w-full overflow-hidden">
+                {backdropUrl && (
+                    <img 
+                        src={backdropUrl} 
+                        className="w-full h-full object-cover"
+                        alt={movie.title} 
+                    />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/60 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/40 to-transparent" />
                 
-                <div className="absolute bottom-0 left-0 w-full p-8 lg:p-16 space-y-6">
-                    <Button 
-                        variant="ghost" 
-                        className="text-red-500 hover:text-red-400 p-0 h-auto gap-2"
-                        onClick={() => navigate(-1)}
-                    >
-                        <ArrowLeft className="w-5 h-5" /> Back to Movies
-                    </Button>
-                    
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-3">
-                            <Badge className="bg-red-600 hover:bg-red-700 text-white border-none px-3 py-1">Featured</Badge>
-                            <span className="flex items-center gap-1 text-yellow-500 font-bold">
-                                <Star className="w-4 h-4 fill-current" /> {movie.rating}
-                            </span>
-                        </div>
-                        <h1 className="text-5xl lg:text-7xl font-black tracking-tighter uppercase italic">{movie.title}</h1>
-                        <p className="text-xl text-red-200/70 italic font-medium">"{movie.tagline}"</p>
+                <div className="absolute bottom-0 left-0 w-full p-6 md:p-12 lg:p-20 flex flex-col md:flex-row gap-8 items-end md:items-start">
+                    {/* Poster - hidden on mobile hero for cleaner look */}
+                    <div className="hidden md:block w-64 rounded-xl overflow-hidden shadow-2xl border border-white/10 shrink-0 transform -translate-y-12">
+                        <img src={posterUrl} alt={movie.title} className="w-full h-full object-cover" />
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-6 text-sm font-semibold text-gray-400">
-                        <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" /> {movie.year}</span>
-                        <span className="flex items-center gap-1.5"><Clock className="w-4 h-4" /> {movie.duration}</span>
-                        <div className="flex gap-2">
-                            {movie.genre.map(g => (
-                                <span key={g} className="px-2 py-0.5 border border-red-900/50 rounded-md text-[10px] uppercase tracking-widest">{g}</span>
-                            ))}
+                    <div className="flex-1 space-y-6">
+                        <Button 
+                            variant="ghost" 
+                            className="text-white hover:text-red-500 p-0 h-auto gap-2 transition-colors"
+                            onClick={() => navigate(-1)}
+                        >
+                            <ArrowLeft className="w-5 h-5" /> Back
+                        </Button>
+                        
+                        <div className="space-y-4">
+                            <div className="flex flex-wrap items-center gap-3">
+                                <Badge className="bg-[#e50914] text-white border-none px-3 py-1 text-xs">
+                                    <TrendingUp className="w-3 h-3 mr-1" /> Trending
+                                </Badge>
+                                <span className="flex items-center gap-1 text-yellow-400 font-bold">
+                                    <Star className="w-4 h-4 fill-current" /> {movie.vote_average.toFixed(1)}
+                                </span>
+                                <span className="text-gray-400 text-sm">• {movie.vote_count} votes</span>
+                            </div>
+                            
+                            <h1 className="text-4xl md:text-6xl font-black tracking-tight">{movie.title}</h1>
+                            {movie.tagline && (
+                                <p className="text-xl text-gray-400 italic">"{movie.tagline}"</p>
+                            )}
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-6 text-sm font-semibold text-gray-300">
+                            <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4 text-red-500" /> {movie.release_date?.slice(0, 4)}</span>
+                            <span className="flex items-center gap-1.5"><Clock className="w-4 h-4 text-red-500" /> {movie.runtime} min</span>
+                            <div className="flex flex-wrap gap-2">
+                                {movie.genres?.map(genre => (
+                                    <span key={genre.id} className="px-3 py-1 bg-white/10 rounded-full text-xs hover:bg-white/20 transition-colors">
+                                        {genre.name}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-4 pt-4">
+                            <Button className="bg-[#e50914] hover:bg-red-700 text-white rounded-full px-8 h-12 text-md font-bold transition-all transform hover:scale-105">
+                                <Play className="w-5 h-5 mr-2 fill-current" /> Watch Trailer
+                            </Button>
+                            <Button variant="outline" className="border-white/20 hover:bg-white/10 text-white rounded-full px-8 h-12">
+                                <Plus className="w-5 h-5 mr-2" /> Add to List
+                            </Button>
+                            <Button variant="ghost" className="text-gray-400 hover:text-white rounded-full w-12 h-12 p-0 border border-white/10">
+                                <Share2 className="w-5 h-5" />
+                            </Button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Content Grid */}
-            <div className="max-w-7xl mx-auto px-8 lg:px-16 py-12 grid lg:grid-cols-3 gap-12">
+            {/* Content Section */}
+            <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20 py-16 space-y-20">
                 
-                {/* Left Column: Synopsis & Action */}
-                <div className="lg:col-span-2 space-y-10">
-                    <section className="space-y-4">
-                        <h3 className="text-2xl font-bold border-l-4 border-red-600 pl-4">Synopsis</h3>
-                        <p className="text-lg text-gray-300 leading-relaxed">
-                            {movie.synopsis}
+                {/* Overview */}
+                <section className="grid lg:grid-cols-3 gap-12">
+                    <div className="lg:col-span-2 space-y-6">
+                        <div className="flex items-center gap-2">
+                            <div className="w-1 h-8 bg-[#e50914] rounded-full" />
+                            <h3 className="text-2xl font-bold">Synopsis</h3>
+                        </div>
+                        <p className="text-lg text-gray-300 leading-relaxed max-w-4xl">
+                            {movie.overview}
                         </p>
-                    </section>
-
-                    <div className="flex flex-wrap gap-4">
-                        <Button className="bg-red-600 hover:bg-red-700 text-white rounded-full px-8 h-12 text-lg font-bold shadow-[0_0_20px_rgba(220,38,38,0.4)]">
-                            <Play className="w-5 h-5 mr-2 fill-current" /> Watch Now
-                        </Button>
-                        <Button variant="outline" className="border-red-900/50 hover:bg-red-950/30 text-white rounded-full px-8 h-12">
-                            <Plus className="w-5 h-5 mr-2" /> Add to List
-                        </Button>
-                        <Button variant="ghost" className="text-gray-400 hover:text-white rounded-full w-12 h-12 p-0">
-                            <Share2 className="w-5 h-5" />
-                        </Button>
                     </div>
 
-                    {/* Cast Section */}
-                    <section className="space-y-6">
-                        <h3 className="text-2xl font-bold border-l-4 border-red-600 pl-4">Lead Cast</h3>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
-                            {movie.cast.map(person => (
-                                <div key={person.name} className="group cursor-pointer">
-                                    <div className="relative aspect-square rounded-2xl overflow-hidden mb-3 border border-red-900/20">
-                                        <img src={person.image} className="w-full h-full object-cover transition-transform group-hover:scale-110" alt={person.name} />
-                                        <div className="absolute inset-0 bg-red-900/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                    </div>
-                                    <p className="font-bold text-white group-hover:text-red-500 transition-colors">{person.name}</p>
-                                    <p className="text-xs text-gray-500 uppercase tracking-tighter">{person.role}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </section>
-                </div>
-
-                {/* Right Column: Info Sidebar */}
-                <div className="space-y-8">
-                    <Card className="bg-[#1a0505]/40 border-red-900/30 text-white backdrop-blur-sm">
-                        <CardContent className="p-8 space-y-6">
-                            <div>
-                                <h4 className="text-xs font-bold text-red-500 uppercase tracking-widest mb-1">Director</h4>
-                                <p className="text-xl font-medium">{movie.director}</p>
-                            </div>
-                            <div className="pt-4 border-t border-red-900/20">
-                                <h4 className="text-xs font-bold text-red-500 uppercase tracking-widest mb-1">Parental Guidance</h4>
-                                <div className="flex items-center gap-2">
-                                    <ShieldAlert className="w-5 h-5 text-yellow-500" />
-                                    <span className="text-sm font-semibold">Rated R for intense horror</span>
-                                </div>
-                            </div>
-                            <div className="pt-4 border-t border-red-900/20">
-                                <h4 className="text-xs font-bold text-red-500 uppercase tracking-widest mb-2">Original Studio</h4>
-                                <div className="flex items-center gap-2 text-gray-300">
-                                    <UserCircle2 className="w-6 h-6" />
-                                    <span className="font-bold">ITI Crimson Studios</span>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <div className="p-8 rounded-3xl bg-gradient-to-br from-red-950/20 to-transparent border border-red-900/10">
-                        <h4 className="text-lg font-bold mb-4">You might also like</h4>
+                    <div className="bg-white/5 border border-white/10 rounded-3xl p-8 space-y-6">
                         <div className="space-y-4">
-                            {[1, 2, 3].map(i => (
-                                <div key={i} className="flex gap-4 items-center group cursor-pointer">
-                                    <div className="w-16 h-16 rounded-xl bg-red-950/50 flex-shrink-0 overflow-hidden">
-                                        <div className="w-full h-full bg-gradient-to-br from-red-600/20 to-[#050000]" />
-                                    </div>
-                                    <div>
-                                        <p className="font-bold text-sm group-hover:text-red-500 transition-colors line-clamp-1">Dark Initiation {i}</p>
-                                        <p className="text-[10px] text-gray-500 uppercase tracking-widest">Horror • 202{i}</p>
-                                    </div>
-                                </div>
-                            ))}
+                            <div className="flex justify-between items-center pb-4 border-b border-white/10">
+                                <span className="text-gray-400 text-sm">Status</span>
+                                <span className="font-semibold text-green-500">{movie.status}</span>
+                            </div>
+                            <div className="flex justify-between items-center pb-4 border-b border-white/10">
+                                <span className="text-gray-400 text-sm">Release Date</span>
+                                <span className="font-semibold">{movie.release_date}</span>
+                            </div>
+                            <div className="flex justify-between items-center pb-4 border-b border-white/10">
+                                <span className="text-gray-400 text-sm">Budget</span>
+                                <span className="font-semibold">${(movie.budget / 1000000).toFixed(1)}M</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-400 text-sm">Revenue</span>
+                                <span className="font-semibold">${(movie.revenue / 1000000).toFixed(1)}M</span>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </section>
+
+                {/* Cast Section */}
+                <section className="space-y-8">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <div className="w-1 h-8 bg-[#e50914] rounded-full" />
+                            <h3 className="text-2xl font-bold">Top Cast</h3>
+                            <Badge variant="outline" className="ml-2 border-white/20 text-gray-400">
+                                <Users className="w-3 h-3 mr-1" /> {credits.cast?.length} Members
+                            </Badge>
+                        </div>
+                        {/* Scroll Buttons */}
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => scrollCast('left')}
+                                className="p-2 rounded-full border border-white/20 text-white hover:bg-white/10 transition-all"
+                            >
+                                <ChevronLeft className="w-5 h-5" />
+                            </button>
+                            <button
+                                onClick={() => scrollCast('right')}
+                                className="p-2 rounded-full border border-white/20 text-white hover:bg-white/10 transition-all"
+                            >
+                                <ChevronRight className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div 
+                        ref={castRowRef}
+                        className="flex gap-6 overflow-x-auto pb-4"
+                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                    >
+                        {credits.cast?.slice(0, 15).map(person => (
+                            <div key={person.id} className="group shrink-0 w-32 md:w-40">
+                                <div className="aspect-[2/3] rounded-2xl overflow-hidden mb-3 border border-white/5 bg-gray-900 shadow-xl">
+                                    <img 
+                                        src={person.profile_path ? `https://image.tmdb.org/t/p/w200${person.profile_path}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=${person.name}`} 
+                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                                        alt={person.name} 
+                                    />
+                                </div>
+                                <p className="font-bold text-sm text-white line-clamp-1 group-hover:text-red-500 transition-colors">{person.name}</p>
+                                <p className="text-xs text-gray-500 line-clamp-1">{person.character}</p>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+
+                {/* Similar Movies Row */}
+                <section>
+                    <MovieRow 
+                        title="More Like This" 
+                        movies={similarMovies} 
+                        loading={loadingSimilar} 
+                    />
+                </section>
             </div>
         </div>
     );
