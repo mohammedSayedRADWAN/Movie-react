@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
+import { useTranslation } from 'react-i18next';
 import { 
     Star, 
     Clock, 
@@ -31,6 +32,7 @@ import { useMovieVideos } from '@/hooks/useMovieVideos';
 import { MovieRow } from '@/components/MovieRow';
 
 const MovieDetailsPage = () => {
+    const { t } = useTranslation();
     const { id } = useParams();
     const navigate = useNavigate();
     
@@ -44,7 +46,9 @@ const MovieDetailsPage = () => {
 
     const scrollCast = (direction) => {
         if (castRowRef.current) {
-            const scrollAmount = 600;
+            const isRtl = document.documentElement.dir === 'rtl';
+            const multiplier = isRtl ? -1 : 1;
+            const scrollAmount = 600 * multiplier;
             castRowRef.current.scrollBy({ 
                 left: direction === 'left' ? -scrollAmount : scrollAmount, 
                 behavior: 'smooth' 
@@ -54,11 +58,11 @@ const MovieDetailsPage = () => {
 
     if (loadingMovie) {
         return (
-            <div className="min-h-screen bg-[#0a0a0a] text-white p-8">
-                <Skeleton className="w-full h-[60vh] rounded-2xl bg-gray-900" />
+            <div className="min-h-screen bg-background text-foreground p-8">
+                <Skeleton className="w-full h-[60vh] rounded-2xl" />
                 <div className="mt-8 space-y-4">
-                    <Skeleton className="w-1/3 h-12 bg-gray-900" />
-                    <Skeleton className="w-full h-24 bg-gray-900" />
+                    <Skeleton className="w-1/3 h-12" />
+                    <Skeleton className="w-full h-24" />
                 </div>
             </div>
         );
@@ -66,10 +70,10 @@ const MovieDetailsPage = () => {
 
     if (movieError || !movie) {
         return (
-            <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center text-white p-4">
-                <h2 className="text-2xl font-bold mb-4">Oops! Movie not found.</h2>
-                <Button onClick={() => navigate('/')} style={{ backgroundColor: '#e50914' }}>
-                    Back to Home
+            <div className="min-h-screen bg-background flex flex-col items-center justify-center text-foreground p-4">
+                <h2 className="text-2xl font-bold mb-4">{t('common.error')}</h2>
+                <Button onClick={() => navigate('/')} className="bg-primary hover:bg-primary/90">
+                    {t('movie.back')}
                 </Button>
             </div>
         );
@@ -86,56 +90,56 @@ const MovieDetailsPage = () => {
         : 'https://via.placeholder.com/500x750?text=No+Poster';
 
     return (
-        <div className="min-h-screen bg-[#0a0a0a] text-white -m-4">
+        <div className="min-h-screen bg-background text-foreground -m-4 transition-colors duration-300">
             {/* Hero Section */}
             <div className="relative h-[80vh] w-full overflow-hidden">
                 {backdropUrl && (
                     <img 
                         src={backdropUrl} 
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover transition-transform duration-10000 hover:scale-110"
                         alt={movie.title} 
                     />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/60 to-transparent" />
-                <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/40 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-background via-background/60 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-r from-background via-background/40 to-transparent rtl:bg-linear-to-l" />
                 
-                <div className="absolute bottom-0 left-0 w-full p-6 md:p-12 lg:p-20 flex flex-col md:flex-row gap-8 items-end md:items-start text-left">
-                    <div className="hidden md:block w-64 rounded-xl overflow-hidden shadow-2xl border border-white/10 shrink-0 transform -translate-y-12">
+                <div className="absolute bottom-0 left-0 rtl:left-auto rtl:right-0 w-full p-6 md:p-12 lg:p-20 flex flex-col md:flex-row gap-8 items-end md:items-start text-left rtl:text-right">
+                    <div className="hidden md:block w-64 rounded-xl overflow-hidden shadow-2xl border border-border shrink-0 transform -translate-y-12">
                         <img src={posterUrl} alt={movie.title} className="w-full h-full object-cover" />
                     </div>
 
                     <div className="flex-1 space-y-6">
                         <Button 
                             variant="ghost" 
-                            className="text-white hover:text-red-500 p-0 h-auto gap-2 transition-colors"
+                            className="text-foreground hover:text-primary p-0 h-auto gap-2 transition-colors"
                             onClick={() => navigate(-1)}
                         >
-                            <ArrowLeft className="w-5 h-5" /> Back
+                            <ArrowLeft className="w-5 h-5 rtl:rotate-180" /> {t('movie.back')}
                         </Button>
                         
                         <div className="space-y-4">
                             <div className="flex flex-wrap items-center gap-3">
-                                <Badge className="bg-[#e50914] text-white border-none px-3 py-1 text-xs">
-                                    <TrendingUp className="w-3 h-3 mr-1" /> Trending
+                                <Badge className="bg-primary text-primary-foreground border-none px-3 py-1 text-xs">
+                                    <TrendingUp className="w-3 h-3 mr-1 rtl:ml-1 rtl:mr-0" /> {t('movie.trending')}
                                 </Badge>
-                                <span className="flex items-center gap-1 text-yellow-400 font-bold">
+                                <span className="flex items-center gap-1 text-yellow-500 font-bold">
                                     <Star className="w-4 h-4 fill-current" /> {movie.vote_average.toFixed(1)}
                                 </span>
-                                <span className="text-gray-400 text-sm">• {movie.vote_count} votes</span>
+                                <span className="text-muted-foreground text-sm">• {movie.vote_count} votes</span>
                             </div>
                             
                             <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-tight">{movie.title}</h1>
                             {movie.tagline && (
-                                <p className="text-xl text-gray-400 italic">"{movie.tagline}"</p>
+                                <p className="text-xl text-muted-foreground italic">"{movie.tagline}"</p>
                             )}
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-6 text-sm font-semibold text-gray-300">
-                            <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4 text-red-500" /> {movie.release_date?.slice(0, 4)}</span>
-                            <span className="flex items-center gap-1.5"><Clock className="w-4 h-4 text-red-500" /> {movie.runtime} min</span>
+                        <div className="flex flex-wrap items-center gap-6 text-sm font-semibold text-muted-foreground">
+                            <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4 text-primary" /> {movie.release_date?.slice(0, 4)}</span>
+                            <span className="flex items-center gap-1.5"><Clock className="w-4 h-4 text-primary" /> {movie.runtime} {t('movie.runtime')}</span>
                             <div className="flex flex-wrap gap-2">
                                 {movie.genres?.map(genre => (
-                                    <span key={genre.id} className="px-3 py-1 bg-white/10 rounded-full text-xs hover:bg-white/20 transition-colors">
+                                    <span key={genre.id} className="px-3 py-1 bg-muted rounded-full text-xs hover:bg-muted/80 transition-colors">
                                         {genre.name}
                                     </span>
                                 ))}
@@ -145,14 +149,14 @@ const MovieDetailsPage = () => {
                         <div className="flex flex-wrap gap-4 pt-4">
                             <Dialog open={isTrailerOpen} onOpenChange={setIsTrailerOpen}>
                                 <DialogTrigger asChild>
-                                    <Button className="bg-[#e50914] hover:bg-red-700 text-white rounded-full px-8 h-12 text-md font-bold transition-all transform hover:scale-105">
-                                        <Play className="w-5 h-5 mr-2 fill-current" /> Watch Trailer
+                                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-8 h-12 text-md font-bold transition-all transform hover:scale-105">
+                                        <Play className="w-5 h-5 mr-2 rtl:ml-2 rtl:mr-0 fill-current" /> {t('movie.watchTrailer')}
                                     </Button>
                                 </DialogTrigger>
-                                <DialogContent className="max-w-4xl bg-black/95 border-white/10 p-0 overflow-hidden sm:max-w-4xl">
-                                    <DialogHeader className="p-4 bg-[#0a0a0a]">
-                                        <DialogTitle className="text-white flex items-center gap-2">
-                                            <Video className="w-5 h-5 text-red-600" /> {movie.title} - Official Trailer
+                                <DialogContent className="max-w-4xl bg-background border-border p-0 overflow-hidden sm:max-w-4xl">
+                                    <DialogHeader className="p-4 bg-muted">
+                                        <DialogTitle className="text-foreground flex items-center gap-2">
+                                            <Video className="w-5 h-5 text-primary" /> {movie.title} - Official Trailer
                                         </DialogTitle>
                                     </DialogHeader>
                                     <div className="aspect-video w-full">
@@ -167,19 +171,19 @@ const MovieDetailsPage = () => {
                                                 allowFullScreen
                                             />
                                         ) : (
-                                            <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 gap-4">
+                                            <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground gap-4">
                                                 <Video className="w-12 h-12" />
-                                                <p>Trailer not available at the moment.</p>
+                                                <p>{t('movie.trailerNotAvailable')}</p>
                                             </div>
                                         )}
                                     </div>
                                 </DialogContent>
                             </Dialog>
 
-                            <Button variant="outline" className="border-white/20 hover:bg-white/10 text-white rounded-full px-8 h-12">
-                                <Plus className="w-5 h-5 mr-2" /> Add to List
-                            </Button>
-                            <Button variant="ghost" className="text-gray-400 hover:text-white rounded-full w-12 h-12 p-0 border border-white/10">
+                            <Button variant="outline" className="border-border hover:bg-muted text-foreground rounded-full px-8 h-12">
+                                <Plus className="w-5 h-5 mr-2 rtl:ml-2 rtl:mr-0" /> {t('movie.addToList')}
+                             </Button>
+                             <Button variant="ghost" className="text-muted-foreground hover:text-foreground rounded-full w-12 h-12 p-0 border border-border">
                                 <Share2 className="w-5 h-5" />
                             </Button>
                         </div>
@@ -191,33 +195,33 @@ const MovieDetailsPage = () => {
             <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20 py-16 space-y-20">
                 
                 {/* Overview */}
-                <section className="grid lg:grid-cols-3 gap-12 text-left">
+                <section className="grid lg:grid-cols-3 gap-12 text-left rtl:text-right">
                     <div className="lg:col-span-2 space-y-6">
                         <div className="flex items-center gap-2">
-                            <div className="w-1 h-8 bg-[#e50914] rounded-full" />
-                            <h3 className="text-2xl font-bold">Synopsis</h3>
+                            <div className="w-1 h-8 bg-primary rounded-full" />
+                            <h3 className="text-2xl font-bold">{t('movie.synopsis')}</h3>
                         </div>
-                        <p className="text-lg text-gray-300 leading-relaxed max-w-4xl">
+                        <p className="text-lg text-muted-foreground leading-relaxed max-w-4xl">
                             {movie.overview}
                         </p>
                     </div>
 
-                    <div className="bg-white/5 border border-white/10 rounded-3xl p-8 space-y-6">
+                    <div className="bg-muted/50 border border-border rounded-3xl p-8 space-y-6">
                         <div className="space-y-4">
-                            <div className="flex justify-between items-center pb-4 border-b border-white/10">
-                                <span className="text-gray-400 text-sm">Status</span>
+                            <div className="flex justify-between items-center pb-4 border-b border-border">
+                                <span className="text-muted-foreground text-sm">{t('movie.status')}</span>
                                 <span className="font-semibold text-green-500">{movie.status}</span>
                             </div>
-                            <div className="flex justify-between items-center pb-4 border-b border-white/10">
-                                <span className="text-gray-400 text-sm">Release Date</span>
+                            <div className="flex justify-between items-center pb-4 border-b border-border">
+                                <span className="text-muted-foreground text-sm">{t('movie.releaseDate')}</span>
                                 <span className="font-semibold">{movie.release_date}</span>
                             </div>
-                            <div className="flex justify-between items-center pb-4 border-b border-white/10">
-                                <span className="text-gray-400 text-sm">Budget</span>
+                            <div className="flex justify-between items-center pb-4 border-b border-border">
+                                <span className="text-muted-foreground text-sm">{t('movie.budget')}</span>
                                 <span className="font-semibold">${(movie.budget / 1000000).toFixed(1)}M</span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="text-gray-400 text-sm">Revenue</span>
+                                <span className="text-muted-foreground text-sm">{t('movie.revenue')}</span>
                                 <span className="font-semibold">${(movie.revenue / 1000000).toFixed(1)}M</span>
                             </div>
                         </div>
@@ -225,25 +229,25 @@ const MovieDetailsPage = () => {
                 </section>
 
                 {/* Cast Section */}
-                <section className="space-y-8 text-left">
+                <section className="space-y-8 text-left rtl:text-right">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <div className="w-1 h-8 bg-[#e50914] rounded-full" />
-                            <h3 className="text-2xl font-bold">Top Cast</h3>
-                            <Badge variant="outline" className="ml-2 border-white/20 text-gray-400">
-                                <Users className="w-3 h-3 mr-1" /> {credits?.cast?.length || 0} Members
+                            <div className="w-1 h-8 bg-primary rounded-full" />
+                            <h3 className="text-2xl font-bold">{t('movie.topCast')}</h3>
+                            <Badge variant="outline" className="ml-2 rtl:mr-2 rtl:ml-0 border-border text-muted-foreground">
+                                <Users className="w-3 h-3 mr-1 rtl:ml-1 rtl:mr-0" /> {credits?.cast?.length || 0} {t('movie.members')}
                             </Badge>
                         </div>
                         <div className="flex gap-2">
                             <button
                                 onClick={() => scrollCast('left')}
-                                className="p-2 rounded-full border border-white/20 text-white hover:bg-white/10 transition-all"
+                                className="p-2 rounded-full border border-border text-foreground hover:bg-muted transition-all rotate-0 rtl:rotate-180"
                             >
                                 <ChevronLeft className="w-5 h-5" />
                             </button>
                             <button
                                 onClick={() => scrollCast('right')}
-                                className="p-2 rounded-full border border-white/20 text-white hover:bg-white/10 transition-all"
+                                className="p-2 rounded-full border border-border text-foreground hover:bg-muted transition-all rotate-0 rtl:rotate-180"
                             >
                                 <ChevronRight className="w-5 h-5" />
                             </button>
@@ -252,29 +256,29 @@ const MovieDetailsPage = () => {
                     
                     <div 
                         ref={castRowRef}
-                        className="flex gap-6 overflow-x-auto pb-4"
+                        className="flex gap-6 overflow-x-auto pb-4 no-scrollbar"
                         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
                         {credits?.cast?.slice(0, 15).map(person => (
                             <div key={person.id} className="group shrink-0 w-32 md:w-40">
-                                <div className="aspect-[2/3] rounded-2xl overflow-hidden mb-3 border border-white/5 bg-gray-900 shadow-xl">
+                                <div className="aspect-[2/3] rounded-2xl overflow-hidden mb-3 border border-border bg-muted shadow-xl">
                                     <img 
                                         src={person.profile_path ? `https://image.tmdb.org/t/p/w200${person.profile_path}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=${person.name}`} 
                                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
                                         alt={person.name} 
                                     />
                                 </div>
-                                <p className="font-bold text-sm text-white line-clamp-1 group-hover:text-red-500 transition-colors uppercase">{person.name}</p>
-                                <p className="text-xs text-gray-500 line-clamp-1">{person.character}</p>
+                                <p className="font-bold text-sm text-foreground line-clamp-1 group-hover:text-primary transition-colors uppercase">{person.name}</p>
+                                <p className="text-xs text-muted-foreground line-clamp-1">{person.character}</p>
                             </div>
                         ))}
                     </div>
                 </section>
 
                 {/* Similar Movies Row */}
-                <section className="text-left">
+                <section className="text-left rtl:text-right">
                     <MovieRow 
-                        title="More Like This" 
+                        title={t('movie.moreLikeThis')} 
                         movies={similarMovies} 
                         loading={loadingSimilar} 
                     />

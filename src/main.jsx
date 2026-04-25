@@ -1,11 +1,13 @@
 import './index.css';
-import { StrictMode, lazy } from 'react';
+import './lib/i18n';
+import { StrictMode, lazy, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router';
 import { ThemeProvider } from './components/theme-provider';
 import MainLayout from './layouts/MainLayout';
 import { store } from './redux/store';
 import { Provider } from 'react-redux';
+import { Spinner } from './components/ui/spinner';
 
 // Lazy loading components
 const HomePage = lazy(() => import('./pages/HomePage'));
@@ -27,39 +29,75 @@ const router = createBrowserRouter(
 			children: [
 				{
 					index: true,
-					element: <HomePage />,
+					element: (
+						<Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Spinner /></div>}>
+							<HomePage />
+						</Suspense>
+					),
 				},
 				{
 					path: '/users/',
-					element: <UsersPage />,
+					element: (
+						<Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Spinner /></div>}>
+							<UsersPage />
+						</Suspense>
+					),
 				},
 				{
 					path: '/login/',
-					element: <LoginPage />,
+					element: (
+						<Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Spinner /></div>}>
+							<LoginPage />
+						</Suspense>
+					),
 				},
 				{
 					path: '/register/',
-					element: <RegisterPage />,
+					element: (
+						<Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Spinner /></div>}>
+							<RegisterPage />
+						</Suspense>
+					),
 				},
 				{
 					path: '/wishlist/',
-					element: <WishlistPage />,
+					element: (
+						<Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Spinner /></div>}>
+							<WishlistPage />
+						</Suspense>
+					),
 				},
 				{
 					path: '/store/',
-					element: <StoreManagement />,
+					element: (
+						<Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Spinner /></div>}>
+							<StoreManagement />
+						</Suspense>
+					),
 				},
 				{
 					path: '/search',
-					element: <SearchResultsPage />,
+					element: (
+						<Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Spinner /></div>}>
+							<SearchResultsPage />
+						</Suspense>
+					),
 				},
 				{
 					path: '/users/:id',
-					element: <UserPage />,
+					element: (
+						<Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Spinner /></div>}>
+							<UserPage />
+						</Suspense>
+					),
 				},
 				{
 					path: '/movie/:id',
-					element: <MovieDetailsPage />,
+					element: (
+						<Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Spinner /></div>}>
+							<MovieDetailsPage />
+						</Suspense>
+					),
 				},
 			],
 		},
@@ -75,10 +113,10 @@ const router = createBrowserRouter(
 
 createRoot(document.getElementById('root')).render(
 	<StrictMode>
-		<ThemeProvider defaultTheme='light' storageKey='vite-ui-theme'>
+		<ThemeProvider defaultTheme='dark' storageKey='vite-ui-theme'>
 			<Provider store={store}>
 				<RouterProvider router={router} />
 			</Provider>
 		</ThemeProvider>
 	</StrictMode>,
-);
+);

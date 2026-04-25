@@ -2,58 +2,22 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useNavigate } from 'react-router';
-import { 
-  Box, 
-  Container, 
-  Typography, 
-  TextField, 
-  Button, 
-  IconButton, 
-  InputAdornment, 
-  Alert,
-  Paper,
-  ThemeProvider,
-  createTheme,
-  CssBaseline,
-  CircularProgress,
-  FormControlLabel,
-  Checkbox
-} from '@mui/material';
-import { 
-  Visibility, 
-  VisibilityOff, 
+import { useNavigate, Link } from 'react-router';
+import { useTranslation } from 'react-i18next';
+import {
+  Eye,
+  EyeOff,
   MovieFilter,
-  ArrowBack
-} from '@mui/icons-material';
+  ArrowLeft,
+  Loader2
+} from 'lucide-react';
 import { useAuthStore } from '@/zustand/useAuthStore';
-
-// Dark Cinematic Theme for MUI (reused to match Register)
-const darkTheme = createTheme({
-  palette: {
-    mode: 'dark',
-    primary: {
-      main: '#e50914',
-    },
-    background: {
-      default: '#0a0a0a',
-      paper: '#141414',
-    },
-    text: {
-      primary: '#ffffff',
-      secondary: '#b3b3b3',
-    },
-  },
-  typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-    h4: {
-      fontWeight: 900,
-    },
-  },
-  shape: {
-    borderRadius: 12,
-  },
-});
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -61,6 +25,7 @@ const loginSchema = z.object({
 });
 
 const LoginPage = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const loginAction = useAuthStore((state) => state.login);
   const [showPassword, setShowPassword] = useState(false);
@@ -81,18 +46,17 @@ const LoginPage = () => {
     try {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      
+
       const users = JSON.parse(localStorage.getItem('users')) || [];
       const user = users.find((u) => u.email === data.email && u.password === data.password);
 
       if (!user) {
-        throw new Error('Invalid email or password');
+        throw new Error(t('auth.invalidAuth'));
       }
 
-      // Store in Zustand (this also persists to localStorage via middleware)
       const userData = { id: user.id, username: user.username, email: user.email };
       loginAction(userData);
-      
+
       navigate('/');
     } catch (err) {
       setError(err.message);
@@ -102,134 +66,111 @@ const LoginPage = () => {
   };
 
   return (
-    <ThemeProvider theme={darkTheme}>
-      <CssBaseline />
-      <Box 
-        sx={{ 
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'radial-gradient(circle at top right, rgba(229, 9, 20, 0.1) 0%, transparent 40%), radial-gradient(circle at bottom left, rgba(229, 9, 20, 0.05) 0%, transparent 40%)',
-          py: 4,
-          px: 2
-        }}
-      >
-        <Container maxWidth="sm">
-          <Paper 
-            elevation={24}
-            sx={{ 
-              p: { xs: 3, md: 6 },
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 3,
-              background: 'rgba(20, 20, 20, 0.8)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: 4
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <IconButton onClick={() => navigate('/')} color="inherit">
-                    <ArrowBack />
-                </IconButton>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <MovieFilter color="primary" sx={{ fontSize: 32 }} />
-                    <Typography variant="h6" sx={{ fontWeight: 800 }}>
-                        <span style={{ color: '#e50914' }}>MOVIE</span>APP
-                    </Typography>
-                </Box>
-                <Box sx={{ width: 40 }} />
-            </Box>
+    <div className='min-h-screen flex items-center justify-center bg-background p-4 transition-colors duration-300'>
+      <div className="absolute inset-0 bg-linear-to-tr from-primary/10 via-transparent to-primary/5 pointer-events-none" />
 
-            <Box sx={{ textAlign: 'center', mb: 2 }}>
-              <Typography variant="h4" gutterBottom>
-                Welcome Back
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Sign in to manage your favorites and elite features
-              </Typography>
-            </Box>
+      <Card className="w-full max-w-md border-border bg-card/80 backdrop-blur-md shadow-2xl relative z-10">
+        <CardHeader className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/')} className="rounded-full">
+              <ArrowLeft className="h-5 w-5 rtl:rotate-180" />
+            </Button>
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-primary rounded-lg">
+                <MovieFilter className="h-6 w-6 text-primary-foreground" />
+              </div>
+              <span className="font-black tracking-widest uppercase text-foreground">
+                Movie<span className="text-primary">App</span>
+              </span>
+            </div>
+            <div className="w-10" />
+          </div>
 
-            {error && (
-              <Alert severity="error" sx={{ borderRadius: 2 }}>
-                {error}
-              </Alert>
-            )}
+          <div className="text-center space-y-1">
+            <CardTitle className="text-3xl font-black text-foreground">{t('auth.welcomeBack')}</CardTitle>
+            <CardDescription className="text-muted-foreground">{t('auth.signInToManage')}</CardDescription>
+          </div>
+        </CardHeader>
 
-            <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <TextField
-                fullWidth
-                label="Email Address"
+        <CardContent className="space-y-6">
+          {error && (
+            <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-2 text-left rtl:text-right">
+              <Label htmlFor="email">{t('auth.email')}</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="name@example.com"
                 {...register('email')}
-                error={!!errors.email}
-                helperText={errors.email?.message}
-                variant="outlined"
+                className={errors.email ? "border-destructive focus-visible:ring-destructive" : "bg-muted/50"}
               />
+              {errors.email && <p className="text-xs text-destructive mt-1">{errors.email.message}</p>}
+            </div>
 
-              <TextField
-                fullWidth
-                label="Password"
-                type={showPassword ? 'text' : 'password'}
-                {...register('password')}
-                error={!!errors.password}
-                helperText={errors.password?.message}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
-                        {showPassword ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <FormControlLabel
-                  control={<Checkbox color="primary" size="small" />}
-                  label={<Typography variant="body2">Remember me</Typography>}
+            <div className="space-y-2 text-left rtl:text-right">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">{t('auth.password')}</Label>
+                <Button variant="link" size="sm" className="px-0 h-auto text-xs text-primary font-bold">
+                  {t('auth.forgotPassword')}
+                </Button>
+              </div>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  {...register('password')}
+                  className={errors.password ? "border-destructive focus-visible:ring-destructive" : "bg-muted/50"}
                 />
-                <Button variant="text" size="small" sx={{ textTransform: 'none' }}>
-                  Forgot password?
-                </Button>
-              </Box>
-
-              <Button
-                fullWidth
-                size="large"
-                type="submit"
-                variant="contained"
-                disabled={loading}
-                sx={{ 
-                  py: 1.5, 
-                  fontWeight: 'bold',
-                  fontSize: '1rem',
-                  textTransform: 'none',
-                  boxShadow: '0 8px 16px rgba(229, 9, 20, 0.3)',
-                  '&:hover': {
-                    boxShadow: '0 12px 20px rgba(229, 9, 20, 0.4)',
-                  }
-                }}
-              >
-                {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign In Now'}
-              </Button>
-
-              <Typography variant="body2" align="center" sx={{ mt: 2, color: 'text.secondary' }}>
-                Don't have an account?{' '}
-                <Button 
-                  onClick={() => navigate('/register')} 
-                  sx={{ textTransform: 'none', fontWeight: 'bold' }}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-muted-foreground rtl:left-0 rtl:right-auto"
+                  onClick={() => setShowPassword(!showPassword)}
                 >
-                  Join the Elite
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
-              </Typography>
-            </form>
-          </Paper>
-        </Container>
-      </Box>
-    </ThemeProvider>
+              </div>
+              {errors.password && <p className="text-xs text-destructive mt-1">{errors.password.message}</p>}
+            </div>
+
+            <div className="flex items-center space-x-2 rtl:space-x-reverse text-left rtl:text-right">
+              <Checkbox id="remember" />
+              <label
+                htmlFor="remember"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground"
+              >
+                {t('auth.rememberMe')}
+              </label>
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full h-12 font-bold uppercase tracking-wider shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              disabled={loading}
+            >
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : t('auth.signIn')}
+            </Button>
+          </form>
+        </CardContent>
+
+        <CardFooter className="flex flex-col gap-4 border-t border-border pt-6">
+          <p className="text-sm text-muted-foreground">
+            {t('auth.dontHaveAccount')}{' '}
+            <Link to="/register" className="text-primary font-black hover:underline transition-all">
+              {t('auth.joinElite')}
+            </Link>
+          </p>
+        </CardFooter>
+      </Card>
+    </div>
   );
 };
 
 export default LoginPage;
+

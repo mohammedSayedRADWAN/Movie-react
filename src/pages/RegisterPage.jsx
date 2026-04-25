@@ -2,57 +2,22 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useNavigate } from 'react-router';
-import { 
-  Box, 
-  Container, 
-  Typography, 
-  TextField, 
-  Button, 
-  IconButton, 
-  InputAdornment, 
-  Alert,
-  Paper,
-  ThemeProvider,
-  createTheme,
-  CssBaseline,
-  CircularProgress
-} from '@mui/material';
-import { 
-  Visibility, 
-  VisibilityOff, 
+import { useNavigate, Link } from 'react-router';
+import { useTranslation } from 'react-i18next';
+import {
+  Eye,
+  EyeOff,
   MovieFilter,
-  ArrowBack
-} from '@mui/icons-material';
+  ArrowLeft,
+  Loader2,
+  CheckCircle2
+} from 'lucide-react';
 import { useAuthStore } from '@/zustand/useAuthStore';
-
-// Dark Cinematic Theme for MUI
-const darkTheme = createTheme({
-  palette: {
-    mode: 'dark',
-    primary: {
-      main: '#e50914', // Netflix Red
-    },
-    background: {
-      default: '#0a0a0a',
-      paper: '#141414',
-    },
-    text: {
-      primary: '#ffffff',
-      secondary: '#b3b3b3',
-    },
-  },
-  typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-    h4: {
-      fontWeight: 900,
-      letterSpacing: '-0.02em',
-    },
-  },
-  shape: {
-    borderRadius: 12,
-  },
-});
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const registerSchema = z
   .object({
@@ -72,11 +37,12 @@ const registerSchema = z
   });
 
 const RegisterPage = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
-  const loginAction = useAuthStore((state) => state.login);
   const [showPassword, setShowPassword] = useState(false);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const {
     register,
@@ -88,167 +54,151 @@ const RegisterPage = () => {
 
   const onSubmit = async (data) => {
     setLoading(true);
+    setError('');
     try {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      
+
       const users = JSON.parse(localStorage.getItem('users')) || [];
       if (users.find((u) => u.email === data.email)) {
-        throw new Error('Email already registered');
+        throw new Error(t('auth.emailRegistered'));
       }
 
       const newUser = { id: Date.now(), username: data.username, email: data.email };
       users.push({ ...newUser, password: data.password });
       localStorage.setItem('users', JSON.stringify(users));
-      
+
       setSuccess(true);
       setTimeout(() => {
         navigate('/login');
       }, 2000);
     } catch (err) {
-      alert(err.message);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ThemeProvider theme={darkTheme}>
-      <CssBaseline />
-      <Box 
-        sx={{ 
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'radial-gradient(circle at top left, rgba(229, 9, 20, 0.15) 0%, transparent 40%), radial-gradient(circle at bottom right, rgba(229, 9, 20, 0.05) 0%, transparent 40%)',
-          py: 4,
-          px: 2
-        }}
-      >
-        <Container maxWidth="sm">
-          <Paper 
-            elevation={24}
-            sx={{ 
-              p: { xs: 3, md: 6 },
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 3,
-              background: 'rgba(20, 20, 20, 0.8)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: 4
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <IconButton onClick={() => navigate(-1)} color="inherit">
-                    <ArrowBack />
-                </IconButton>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <MovieFilter color="primary" sx={{ fontSize: 32 }} />
-                    <Typography variant="h6" sx={{ fontWeight: 800 }}>
-                        <span style={{ color: '#e50914' }}>MOVIE</span>APP
-                    </Typography>
-                </Box>
-                <Box sx={{ width: 40 }} /> {/* Spacer */}
-            </Box>
+    <div className='min-h-screen flex items-center justify-center bg-background p-4 transition-colors duration-300'>
+      <div className="absolute inset-0 bg-linear-to-tl from-primary/15 via-transparent to-primary/5 pointer-events-none" />
 
-            <Box sx={{ textAlign: 'center', mb: 2 }}>
-              <Typography variant="h4" gutterBottom>
-                Create Account
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Join our elite movie community today
-              </Typography>
-            </Box>
+      <Card className="w-full max-w-md border-border bg-card/80 backdrop-blur-md shadow-2xl relative z-10">
+        <CardHeader className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-full">
+              <ArrowLeft className="h-5 w-5 rtl:rotate-180" />
+            </Button>
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-primary rounded-lg">
+                <MovieFilter className="h-6 w-6 text-primary-foreground" />
+              </div>
+              <span className="font-black tracking-widest uppercase text-foreground">
+                Movie<span className="text-primary">App</span>
+              </span>
+            </div>
+            <div className="w-10" />
+          </div>
 
-            {success && (
-              <Alert severity="success" sx={{ borderRadius: 2 }}>
-                Account created successfully! Redirecting to login...
-              </Alert>
-            )}
+          <div className="text-center space-y-1">
+            <CardTitle className="text-3xl font-black text-foreground">{t('auth.createAccount')}</CardTitle>
+            <CardDescription className="text-muted-foreground">{t('auth.joinCommunity')}</CardDescription>
+          </div>
+        </CardHeader>
 
-            <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <TextField
-                fullWidth
-                label="Username"
+        <CardContent className="space-y-6">
+          {success && (
+            <Alert className="bg-green-500/10 border-green-500/20 text-green-500">
+              <CheckCircle2 className="h-4 w-4" />
+              <AlertDescription>{t('auth.successRegister')}</AlertDescription>
+            </Alert>
+          )}
+
+          {error && (
+            <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-2 text-left rtl:text-right">
+              <Label htmlFor="username">{t('auth.username')}</Label>
+              <Input
+                id="username"
                 {...register('username')}
-                error={!!errors.username}
-                helperText={errors.username?.message}
-                variant="outlined"
+                placeholder="johndoe"
+                className={errors.username ? "border-destructive focus-visible:ring-destructive" : "bg-muted/50"}
               />
+              {errors.username && <p className="text-xs text-destructive mt-1">{errors.username.message}</p>}
+            </div>
 
-              <TextField
-                fullWidth
-                label="Email Address"
+            <div className="space-y-2 text-left rtl:text-right">
+              <Label htmlFor="email">{t('auth.email')}</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="name@example.com"
                 {...register('email')}
-                error={!!errors.email}
-                helperText={errors.email?.message}
-                variant="outlined"
+                className={errors.email ? "border-destructive focus-visible:ring-destructive" : "bg-muted/50"}
               />
+              {errors.email && <p className="text-xs text-destructive mt-1">{errors.email.message}</p>}
+            </div>
 
-              <TextField
-                fullWidth
-                label="Password"
-                type={showPassword ? 'text' : 'password'}
-                {...register('password')}
-                error={!!errors.password}
-                helperText={errors.password?.message}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
-                        {showPassword ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-              />
+            <div className="space-y-2 text-left rtl:text-right">
+              <Label htmlFor="password">{t('auth.password')}</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  {...register('password')}
+                  className={errors.password ? "border-destructive focus-visible:ring-destructive" : "bg-muted/50"}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-muted-foreground rtl:left-0 rtl:right-auto"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
+              {errors.password && <p className="text-xs text-destructive mt-1">{errors.password.message}</p>}
+            </div>
 
-              <TextField
-                fullWidth
-                label="Confirm Password"
+            <div className="space-y-2 text-left rtl:text-right">
+              <Label htmlFor="confirmPassword">{t('auth.confirmPassword')}</Label>
+              <Input
+                id="confirmPassword"
                 type="password"
                 {...register('confirmPassword')}
-                error={!!errors.confirmPassword}
-                helperText={errors.confirmPassword?.message}
+                className={errors.confirmPassword ? "border-destructive focus-visible:ring-destructive" : "bg-muted/50"}
               />
+              {errors.confirmPassword && <p className="text-xs text-destructive mt-1">{errors.confirmPassword.message}</p>}
+            </div>
 
-              <Button
-                fullWidth
-                size="large"
-                type="submit"
-                variant="contained"
-                disabled={loading || success}
-                sx={{ 
-                  py: 1.5, 
-                  fontWeight: 'bold',
-                  fontSize: '1rem',
-                  textTransform: 'none',
-                  boxShadow: '0 8px 16px rgba(229, 9, 20, 0.3)',
-                  '&:hover': {
-                    boxShadow: '0 12px 20px rgba(229, 9, 20, 0.4)',
-                  }
-                }}
-              >
-                {loading ? <CircularProgress size={24} color="inherit" /> : 'Register Now'}
-              </Button>
+            <Button
+              type="submit"
+              className="w-full h-12 font-bold uppercase tracking-wider shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              disabled={loading || success}
+            >
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : t('auth.register')}
+            </Button>
+          </form>
+        </CardContent>
 
-              <Typography variant="body2" align="center" sx={{ mt: 2, color: 'text.secondary' }}>
-                Already have an account?{' '}
-                <Button 
-                  onClick={() => navigate('/login')} 
-                  sx={{ textTransform: 'none', fontWeight: 'bold' }}
-                >
-                  Sign In
-                </Button>
-              </Typography>
-            </form>
-          </Paper>
-        </Container>
-      </Box>
-    </ThemeProvider>
+        <CardFooter className="flex flex-col gap-4 border-t border-border pt-6">
+          <p className="text-sm text-muted-foreground">
+            {t('auth.alreadyHaveAccount')}{' '}
+            <Link to="/login" className="text-primary font-black hover:underline transition-all">
+              {t('auth.signInSmall')}
+            </Link>
+          </p>
+        </CardFooter>
+      </Card>
+    </div>
   );
 };
 
 export default RegisterPage;
+
