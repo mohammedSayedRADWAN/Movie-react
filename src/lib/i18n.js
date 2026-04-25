@@ -93,6 +93,12 @@ const resources = {
         "emptyList": "Your list is empty",
         "startExploring": "Start exploring and save the movies you want to watch later.",
         "exploreNow": "Explore Now"
+      },
+      "error": {
+        "title": "Page not found",
+        "message": "Oops! It looks like the page you were looking for doesn't exist, has been removed, or is temporarily unavailable.",
+        "backHome": "Back to Home",
+        "contactSupport": "Contact Support"
       }
     }
   },
@@ -186,6 +192,12 @@ const resources = {
         "emptyList": "قائمتك فارغة",
         "startExploring": "ابدأ في الاستكشاف واحفظ الأفلام التي تريد مشاهدتها لاحقاً.",
         "exploreNow": "استكشف الآن"
+      },
+      "error": {
+        "title": "الصفحة غير موجودة",
+        "message": "عذراً! يبدو أن الصفحة التي تبحث عنها غير موجودة، أو تم حذفها، أو أنها غير متاحة مؤقتاً.",
+        "backHome": "العودة للرئيسية",
+        "contactSupport": "الاتصال بالدعم"
       }
     }
   }
