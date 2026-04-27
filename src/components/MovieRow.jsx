@@ -11,11 +11,12 @@ import { toast } from 'sonner';
 export function MovieCard({ movie }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { addToFavorites, removeFromFavorites, isFavorite } = useFavoritesStore();
+  const { addToFavorites, removeFromFavorites, favorites } = useFavoritesStore();
   const { isAuthenticated } = useAuthStore();
   
-  const favorite = isFavorite(movie.id);
-
+  
+  const favorite = favorites.some((m) => m.id === movie.id);
+  
   const toggleFavorite = (e) => {
     e.stopPropagation();
     if (!isAuthenticated) {

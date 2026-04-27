@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Eye,
   EyeOff,
-  MovieFilter,
+  Film,
   ArrowLeft,
   Loader2
 } from 'lucide-react';
@@ -77,7 +77,7 @@ const LoginPage = () => {
             </Button>
             <div className="flex items-center gap-2">
               <div className="p-2 bg-primary rounded-lg">
-                <MovieFilter className="h-6 w-6 text-primary-foreground" />
+                <Film className="h-6 w-6 text-primary-foreground" />
               </div>
               <span className="font-black tracking-widest uppercase text-foreground">
                 Movie<span className="text-primary">App</span>

@@ -10,6 +10,7 @@ import { MovieRow } from '@/components/MovieRow';
 import { Button } from '@/components/ui/button';
 import { Play, Plus } from 'lucide-react';
 
+
 function HeroSection({ movie }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -59,6 +60,7 @@ function HeroSection({ movie }) {
 }
 
 export default function HomePage() {
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [selectedGenre, setSelectedGenre] = useState(null);
