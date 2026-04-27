@@ -101,7 +101,7 @@ const RegisterPage = () => {
           </div>
 
           <div className="text-center space-y-1">
-            <CardTitle className="text-3xl font-black text-foreground">{t('auth.createAccount')}</CardTitle>
+            <CardTitle className="text-2xl sm:text-3xl font-black text-foreground">{t('auth.createAccount')}</CardTitle>
             <CardDescription className="text-muted-foreground">{t('auth.joinCommunity')}</CardDescription>
           </div>
         </CardHeader>

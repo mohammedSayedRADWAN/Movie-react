@@ -12,7 +12,7 @@ const WishlistPage = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="min-h-screen bg-background text-foreground transition-colors duration-300 p-6 md:p-12 lg:p-20">
+        <div className="min-h-screen bg-background text-foreground transition-colors duration-300 p-4 sm:p-6 md:p-12 lg:p-20">
             <div className="max-w-7xl mx-auto space-y-12">
                 
                 {/* Header */}
@@ -21,7 +21,7 @@ const WishlistPage = () => {
                         <div className="flex items-center gap-2 text-primary font-black uppercase tracking-[0.2em] text-xs">
                             <Heart className="w-4 h-4 fill-current" /> {t('wishlist.myLibrary')}
                         </div>
-                        <h1 className="text-4xl md:text-6xl font-black tracking-tight">{t('wishlist.yourWishlist')}</h1>
+                        <h1 className="text-3xl sm:text-4xl md:text-6xl font-black tracking-tight">{t('wishlist.yourWishlist')}</h1>
                         <p className="text-muted-foreground font-medium">{t('wishlist.curatedSelection')}</p>
                     </div>
                     <Button 
@@ -43,7 +43,7 @@ const WishlistPage = () => {
                         ))}
                     </div>
                 ) : (
-                    <div className="flex flex-col items-center justify-center py-32 space-y-8 bg-muted/30 rounded-[3rem] border border-dashed border-border/50 backdrop-blur-xs transition-all hover:border-primary/30">
+                    <div className="flex flex-col items-center justify-center py-16 md:py-32 space-y-6 md:space-y-8 bg-muted/30 rounded-3xl md:rounded-[3rem] border border-dashed border-border/50 backdrop-blur-xs transition-all hover:border-primary/30 mx-2 sm:mx-0 px-4 text-center">
                         <div className="w-24 h-24 rounded-full bg-background flex items-center justify-center text-muted-foreground shadow-inner">
                             <Heart className="w-12 h-12" />
                         </div>

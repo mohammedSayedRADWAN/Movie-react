@@ -92,7 +92,8 @@ const resources = {
         "backToHome": "Back to Home",
         "emptyList": "Your list is empty",
         "startExploring": "Start exploring and save the movies you want to watch later.",
-        "exploreNow": "Explore Now"
+        "exploreNow": "Explore Now",
+        "inWishlist": "In Wishlist"
       },
       "error": {
         "title": "Page not found",
@@ -191,7 +192,8 @@ const resources = {
         "backToHome": "العودة للرئيسية",
         "emptyList": "قائمتك فارغة",
         "startExploring": "ابدأ في الاستكشاف واحفظ الأفلام التي تريد مشاهدتها لاحقاً.",
-        "exploreNow": "استكشف الآن"
+        "exploreNow": "استكشف الآن",
+        "inWishlist": "في القائمة"
       },
       "error": {
         "title": "الصفحة غير موجودة",

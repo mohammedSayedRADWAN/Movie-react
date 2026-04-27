@@ -9,7 +9,7 @@ export const FavoritesProvider = ({ children }) => {
   return (
     <FavoritesContext.Provider value={favorites}>
       {children}
-    </AuthContext.Provider>
+    </FavoritesContext.Provider>
   );
 };
 

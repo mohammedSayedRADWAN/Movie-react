@@ -87,7 +87,7 @@ const LoginPage = () => {
           </div>
 
           <div className="text-center space-y-1">
-            <CardTitle className="text-3xl font-black text-foreground">{t('auth.welcomeBack')}</CardTitle>
+            <CardTitle className="text-2xl sm:text-3xl font-black text-foreground">{t('auth.welcomeBack')}</CardTitle>
             <CardDescription className="text-muted-foreground">{t('auth.signInToManage')}</CardDescription>
           </div>
         </CardHeader>

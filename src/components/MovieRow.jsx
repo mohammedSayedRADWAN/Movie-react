@@ -11,10 +11,10 @@ import { toast } from 'sonner';
 export function MovieCard({ movie }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { addToFavorites, removeFromFavorites, isFavorite } = useFavoritesStore();
+  const { favorites, addToFavorites, removeFromFavorites } = useFavoritesStore();
   const { isAuthenticated } = useAuthStore();
   
-  const favorite = isFavorite(movie.id);
+  const favorite = favorites.some((m) => m.id === movie.id);
 
   const toggleFavorite = (e) => {
     e.stopPropagation();
@@ -39,13 +39,13 @@ export function MovieCard({ movie }) {
 
   return (
     <div 
-      className="relative group rounded-xl overflow-hidden cursor-pointer shrink-0 w-44 border border-border bg-card shadow-2xl transition-all duration-300 hover:shadow-primary/10"
+      className="relative group rounded-xl overflow-hidden cursor-pointer w-full border border-border bg-card shadow-2xl transition-all duration-300 hover:shadow-primary/10"
       onClick={() => navigate(`/movie/${movie.id}`)}
     >
       <img
         src={imageUrl}
         alt={movie.title}
-        className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110"
+        className="w-full aspect-[2/3] object-cover transition-transform duration-500 group-hover:scale-110"
       />
       
       {/* Quick Action Overlay */}
@@ -82,8 +82,8 @@ export function MovieCard({ movie }) {
 
 export function SkeletonCard() {
   return (
-    <div className="rounded-xl overflow-hidden shrink-0 w-44">
-      <Skeleton className="w-full h-64" />
+    <div className="rounded-xl overflow-hidden w-full">
+      <Skeleton className="w-full aspect-[2/3]" />
     </div>
   );
 }
@@ -108,7 +108,7 @@ export function MovieRow({ title, movies, loading }) {
           <div className="w-1.5 h-6 rounded-full bg-primary" />
           <h2 className="text-xl font-black text-foreground uppercase tracking-tight">{title}</h2>
         </div>
-        <div className="hidden md:flex gap-2 opacity-0 group-hover/row:opacity-100 transition-opacity">
+        <div className="hidden md:flex gap-2 transition-opacity">
           <button
             onClick={() => scroll('left')}
             className="p-1.5 rounded-full border border-border text-foreground hover:bg-muted transition-all rotate-0 rtl:rotate-180"
@@ -130,8 +130,16 @@ export function MovieRow({ title, movies, loading }) {
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {loading
-          ? Array.from({ length: 10 }).map((_, i) => <SkeletonCard key={i} />)
-          : movies?.map((movie) => <MovieCard key={movie.id} movie={movie} />)
+          ? Array.from({ length: 10 }).map((_, i) => (
+              <div key={i} className="w-36 sm:w-44 shrink-0">
+                <SkeletonCard />
+              </div>
+            ))
+          : movies?.map((movie) => (
+              <div key={movie.id} className="w-36 sm:w-44 shrink-0">
+                <MovieCard movie={movie} />
+              </div>
+            ))
         }
       </div>
     </div>

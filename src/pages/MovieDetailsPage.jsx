@@ -1,29 +1,34 @@
 import React, { useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { 
-    Star, 
-    Clock, 
-    Calendar, 
-    Play, 
-    Plus, 
-    Share2, 
+import {
+    Star,
+    Clock,
+    Calendar,
+    Play,
+    Plus,
+    Share2,
     ArrowLeft,
     TrendingUp,
     Users,
     ChevronLeft,
     ChevronRight,
-    Video
+    Video,
+    Heart,
+    Check
 } from 'lucide-react';
+import { useFavoritesStore } from '@/zustand/useFavoritesStore';
+import { useAuthStore } from '@/zustand/useAuthStore';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { 
-    Dialog, 
-    DialogContent, 
-    DialogHeader, 
-    DialogTitle, 
-    DialogTrigger 
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger
 } from '@/components/ui/dialog';
 import { useMovieDetails } from '@/hooks/useMovieDetails';
 import { useMovieCredits } from '@/hooks/useMovieCredits';
@@ -35,11 +40,32 @@ const MovieDetailsPage = () => {
     const { t } = useTranslation();
     const { id } = useParams();
     const navigate = useNavigate();
-    
+
     const { movie, loading: loadingMovie, error: movieError } = useMovieDetails(id);
     const { credits } = useMovieCredits(id);
     const { movies: similarMovies, loading: loadingSimilar } = useSimilarMovies(id);
     const { videos } = useMovieVideos(id);
+
+    const { favorites, addToFavorites, removeFromFavorites } = useFavoritesStore();
+    const { isAuthenticated } = useAuthStore();
+    const isFavorite = favorites.some((m) => m.id === movie?.id);
+
+    const toggleFavorite = (e) => {
+        e.stopPropagation();
+        if (!isAuthenticated) {
+            toast.error(t('nav.login'));
+            navigate('/login');
+            return;
+        }
+
+        if (isFavorite) {
+            removeFromFavorites(movie.id);
+            toast.success(t('common.addToWishlist') + ' - Removed');
+        } else {
+            addToFavorites(movie);
+            toast.success(t('common.addToWishlist') + ' - Added');
+        }
+    };
 
     const [isTrailerOpen, setIsTrailerOpen] = useState(false);
     const castRowRef = useRef(null);
@@ -49,9 +75,9 @@ const MovieDetailsPage = () => {
             const isRtl = document.documentElement.dir === 'rtl';
             const multiplier = isRtl ? -1 : 1;
             const scrollAmount = 600 * multiplier;
-            castRowRef.current.scrollBy({ 
-                left: direction === 'left' ? -scrollAmount : scrollAmount, 
-                behavior: 'smooth' 
+            castRowRef.current.scrollBy({
+                left: direction === 'left' ? -scrollAmount : scrollAmount,
+                behavior: 'smooth'
             });
         }
     };
@@ -82,11 +108,11 @@ const MovieDetailsPage = () => {
     // Find first YouTube trailer
     const trailer = videos?.find(v => v.type === 'Trailer' && v.site === 'YouTube') || videos?.[0];
 
-    const backdropUrl = movie.backdrop_path 
-        ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}` 
+    const backdropUrl = movie.backdrop_path
+        ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}`
         : null;
-    const posterUrl = movie.poster_path 
-        ? `${import.meta.env.VITE_TMDB_IMAGE_URL}${movie.poster_path}` 
+    const posterUrl = movie.poster_path
+        ? `${import.meta.env.VITE_TMDB_IMAGE_URL}${movie.poster_path}`
         : 'https://via.placeholder.com/500x750?text=No+Poster';
 
     return (
@@ -94,29 +120,29 @@ const MovieDetailsPage = () => {
             {/* Hero Section */}
             <div className="relative h-[80vh] w-full overflow-hidden">
                 {backdropUrl && (
-                    <img 
-                        src={backdropUrl} 
+                    <img
+                        src={backdropUrl}
                         className="w-full h-full object-cover transition-transform duration-10000 hover:scale-110"
-                        alt={movie.title} 
+                        alt={movie.title}
                     />
                 )}
                 <div className="absolute inset-0 bg-linear-to-t from-background via-background/60 to-transparent" />
                 <div className="absolute inset-0 bg-linear-to-r from-background via-background/40 to-transparent rtl:bg-linear-to-l" />
-                
-                <div className="absolute bottom-0 left-0 rtl:left-auto rtl:right-0 w-full p-6 md:p-12 lg:p-20 flex flex-col md:flex-row gap-8 items-end md:items-start text-left rtl:text-right">
-                    <div className="hidden md:block w-64 rounded-xl overflow-hidden shadow-2xl border border-border shrink-0 transform -translate-y-12">
+
+                <div className="absolute bottom-0 left-0 rtl:left-auto rtl:right-0 w-full p-4 sm:p-6 md:p-12 lg:p-20 flex flex-col md:flex-row gap-6 md:gap-8 items-end md:items-start text-left rtl:text-right">
+                    <div className="hidden md:block w-48 lg:w-64 rounded-xl overflow-hidden shadow-2xl border border-border shrink-0 transform -translate-y-12">
                         <img src={posterUrl} alt={movie.title} className="w-full h-full object-cover" />
                     </div>
 
-                    <div className="flex-1 space-y-6">
-                        <Button 
-                            variant="ghost" 
+                    <div className="flex-1 space-y-4 md:space-y-6 w-full">
+                        <Button
+                            variant="ghost"
                             className="text-foreground hover:text-primary p-0 h-auto gap-2 transition-colors"
                             onClick={() => navigate(-1)}
                         >
                             <ArrowLeft className="w-5 h-5 rtl:rotate-180" /> {t('movie.back')}
                         </Button>
-                        
+
                         <div className="space-y-4">
                             <div className="flex flex-wrap items-center gap-3">
                                 <Badge className="bg-primary text-primary-foreground border-none px-3 py-1 text-xs">
@@ -127,10 +153,10 @@ const MovieDetailsPage = () => {
                                 </span>
                                 <span className="text-muted-foreground text-sm">• {movie.vote_count} votes</span>
                             </div>
-                            
-                            <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-tight">{movie.title}</h1>
+
+                            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-tight">{movie.title}</h1>
                             {movie.tagline && (
-                                <p className="text-xl text-muted-foreground italic">"{movie.tagline}"</p>
+                                <p className="text-lg sm:text-xl text-muted-foreground italic">"{movie.tagline}"</p>
                             )}
                         </div>
 
@@ -146,10 +172,10 @@ const MovieDetailsPage = () => {
                             </div>
                         </div>
 
-                        <div className="flex flex-wrap gap-4 pt-4">
+                        <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 pt-4">
                             <Dialog open={isTrailerOpen} onOpenChange={setIsTrailerOpen}>
                                 <DialogTrigger asChild>
-                                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-8 h-12 text-md font-bold transition-all transform hover:scale-105">
+                                    <Button className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-8 h-12 text-md font-bold transition-all transform hover:scale-105">
                                         <Play className="w-5 h-5 mr-2 rtl:ml-2 rtl:mr-0 fill-current" /> {t('movie.watchTrailer')}
                                     </Button>
                                 </DialogTrigger>
@@ -180,11 +206,18 @@ const MovieDetailsPage = () => {
                                 </DialogContent>
                             </Dialog>
 
-                            <Button variant="outline" className="border-border hover:bg-muted text-foreground rounded-full px-8 h-12">
-                                <Plus className="w-5 h-5 mr-2 rtl:ml-2 rtl:mr-0" /> {t('movie.addToList')}
-                             </Button>
-                             <Button variant="ghost" className="text-muted-foreground hover:text-foreground rounded-full w-12 h-12 p-0 border border-border">
+                            <Button
+                                variant={isFavorite ? "default" : "outline"}
+                                onClick={toggleFavorite}
+                                className={`w-full sm:w-auto rounded-full px-8 h-12 font-bold transition-all transform hover:scale-105 ${isFavorite ? "bg-primary text-primary-foreground" : "border-border hover:bg-muted text-foreground"
+                                    }`}
+                            >
+                                {isFavorite ? <Check className="w-5 h-5 mr-2 rtl:ml-2 rtl:mr-0" /> : <Plus className="w-5 h-5 mr-2 rtl:ml-2 rtl:mr-0" />}
+                                {isFavorite ? t('wishlist.inWishlist') || 'In Wishlist' : t('movie.addToList')}
+                            </Button>
+                            <Button variant="ghost" className="w-full sm:w-12 text-muted-foreground hover:text-foreground rounded-full h-12 p-0 border border-border flex justify-center items-center">
                                 <Share2 className="w-5 h-5" />
+                                <span className="sm:hidden ml-2 font-bold">{t('common.share') || 'Share'}</span>
                             </Button>
                         </div>
                     </div>
@@ -193,7 +226,7 @@ const MovieDetailsPage = () => {
 
             {/* Content Section */}
             <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20 py-16 space-y-20">
-                
+
                 {/* Overview */}
                 <section className="grid lg:grid-cols-3 gap-12 text-left rtl:text-right">
                     <div className="lg:col-span-2 space-y-6">
@@ -238,7 +271,7 @@ const MovieDetailsPage = () => {
                                 <Users className="w-3 h-3 mr-1 rtl:ml-1 rtl:mr-0" /> {credits?.cast?.length || 0} {t('movie.members')}
                             </Badge>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="hidden md:flex gap-2">
                             <button
                                 onClick={() => scrollCast('left')}
                                 className="p-2 rounded-full border border-border text-foreground hover:bg-muted transition-all rotate-0 rtl:rotate-180"
@@ -253,8 +286,8 @@ const MovieDetailsPage = () => {
                             </button>
                         </div>
                     </div>
-                    
-                    <div 
+
+                    <div
                         ref={castRowRef}
                         className="flex gap-6 overflow-x-auto pb-4 no-scrollbar"
                         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
@@ -262,10 +295,10 @@ const MovieDetailsPage = () => {
                         {credits?.cast?.slice(0, 15).map(person => (
                             <div key={person.id} className="group shrink-0 w-32 md:w-40">
                                 <div className="aspect-[2/3] rounded-2xl overflow-hidden mb-3 border border-border bg-muted shadow-xl">
-                                    <img 
-                                        src={person.profile_path ? `https://image.tmdb.org/t/p/w200${person.profile_path}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=${person.name}`} 
-                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
-                                        alt={person.name} 
+                                    <img
+                                        src={person.profile_path ? `https://image.tmdb.org/t/p/w200${person.profile_path}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=${person.name}`}
+                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                        alt={person.name}
                                     />
                                 </div>
                                 <p className="font-bold text-sm text-foreground line-clamp-1 group-hover:text-primary transition-colors uppercase">{person.name}</p>
@@ -277,10 +310,10 @@ const MovieDetailsPage = () => {
 
                 {/* Similar Movies Row */}
                 <section className="text-left rtl:text-right">
-                    <MovieRow 
-                        title={t('movie.moreLikeThis')} 
-                        movies={similarMovies} 
-                        loading={loadingSimilar} 
+                    <MovieRow
+                        title={t('movie.moreLikeThis')}
+                        movies={similarMovies}
+                        loading={loadingSimilar}
                     />
                 </section>
             </div>
