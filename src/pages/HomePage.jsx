@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useNowPlaying } from '@/hooks/useNowPlaying';
@@ -12,20 +12,43 @@ import { Play, Plus, Heart, Check } from 'lucide-react';
 import { useFavoritesStore } from '@/zustand/useFavoritesStore';
 import { useAuthStore } from '@/zustand/useAuthStore';
 import { toast } from 'sonner';
+import useEmblaCarousel from 'embla-carousel-react';
 
 
-function HeroSection({ movie }) {
+function HeroSection({ movies, loading }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const backdropUrl = movie?.backdrop_path
-    ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}`
-    : null;
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
+
+  // Custom Autoplay Logic
+  useEffect(() => {
+    if (!emblaApi) return;
+    const intervalId = setInterval(() => {
+      emblaApi.scrollNext();
+    }, 6000);
+    return () => clearInterval(intervalId);
+  }, [emblaApi]);
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setSelectedIndex(emblaApi.selectedScrollSnap());
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    onSelect();
+    emblaApi.on('select', onSelect);
+  }, [emblaApi, onSelect]);
 
   const { favorites, addToFavorites, removeFromFavorites } = useFavoritesStore();
   const { isAuthenticated } = useAuthStore();
-  const isFavorite = favorites.some((m) => m.id === movie.id);
 
-  const toggleFavorite = (e) => {
+  if (loading || !movies || movies.length === 0) {
+    return <div className="w-full h-[85vh] bg-muted animate-pulse" />;
+  }
+
+  const toggleFavorite = (e, movie) => {
     e.stopPropagation();
     if (!isAuthenticated) {
       toast.error(t('nav.login'));
@@ -33,6 +56,7 @@ function HeroSection({ movie }) {
       return;
     }
 
+    const isFavorite = favorites.some((m) => m.id === movie.id);
     if (isFavorite) {
       removeFromFavorites(movie.id);
       toast.success(t('common.addToWishlist') + ' - Removed');
@@ -42,54 +66,138 @@ function HeroSection({ movie }) {
     }
   };
 
-  if (!movie) return null;
+  const featuredMovies = movies.slice(0, 6);
 
   return (
-    <div className="relative w-full h-[85vh] overflow-hidden">
-      {backdropUrl && (
-        <img
-          src={backdropUrl}
-          alt={movie.title}
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-10000 hover:scale-110"
-        />
-      )}
-      <div className="absolute inset-0 bg-linear-to-r from-background/90 via-background/50 to-transparent" />
-      <div className="absolute inset-0 bg-linear-to-t from-background via-transparent to-transparent" />
+    <div className="relative w-full h-[85vh] overflow-hidden group">
+      <div className="overflow-hidden h-full" ref={emblaRef}>
+        <div className="flex h-full">
+          {featuredMovies.map((movie) => {
+            const backdropUrl = movie.backdrop_path
+              ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}`
+              : null;
+            const posterUrl = movie.poster_path
+              ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+              : null;
+            const isFavorite = favorites.some((m) => m.id === movie.id);
 
-      <div className="absolute bottom-8 left-4 right-4 md:bottom-16 md:left-10 md:right-auto rtl:md:left-auto rtl:md:right-10 max-w-xl text-left rtl:text-right">
-        <div className="inline-block px-3 py-1 rounded bg-primary text-primary-foreground text-xs font-bold mb-3 md:mb-4">
-          {t('home.featured')} &nbsp;⭐ {movie.vote_average.toFixed(1)}
+            return (
+              <div key={movie.id} className="relative flex-[0_0_100%] min-w-0 h-full overflow-hidden">
+                {/* Blurred Darkened Background */}
+                {backdropUrl && (
+                  <div 
+                    className="absolute inset-0 bg-cover bg-center scale-110 blur-2xl brightness-[0.25] transition-transform duration-1000 group-hover:scale-125"
+                    style={{ backgroundImage: `url(${backdropUrl})` }}
+                  />
+                )}
+                
+                {/* Sophisticated Gradient Overlay - Dark edges, softer center */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.8)_100%)]" />
+                <div className="absolute inset-0 bg-linear-to-r from-background via-transparent to-background/40" />
+                <div className="absolute inset-0 bg-linear-to-t from-background via-transparent to-transparent" />
+
+                <div className="relative h-full max-w-7xl mx-auto px-4 md:px-10 flex flex-col md:flex-row items-center justify-between gap-10 py-12 md:py-0">
+                  
+                  {/* Content Area (Text & CTAs) */}
+                  <div className="flex-1 text-left rtl:text-right z-10 animate-in fade-in slide-in-from-left-12 duration-1000">
+                    <div className="inline-block px-4 py-1.5 rounded-full bg-primary/20 border border-primary/30 text-primary text-[10px] md:text-xs font-black tracking-[0.2em] uppercase mb-4 md:mb-8">
+                      {t('home.featured')} &nbsp;•&nbsp; {movie.vote_average.toFixed(1)}
+                    </div>
+                    
+                    <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-white mb-6 md:mb-8 leading-[0.95] tracking-tight max-w-2xl drop-shadow-2xl">
+                      {movie.title}
+                    </h1>
+
+                    <div className="flex items-center gap-4 text-white/70 text-sm md:text-base font-bold mb-8 md:mb-10">
+                      <span className="bg-white/10 backdrop-blur-md px-3 py-1 rounded-md border border-white/10 shadow-sm">{movie.release_date?.slice(0, 4)}</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                      <span className="bg-white/10 backdrop-blur-md px-3 py-1 rounded-md border border-white/10 shadow-sm">⭐ {movie.vote_average.toFixed(1)}</span>
+                    </div>
+
+                    <p className="text-white/60 text-base md:text-xl leading-relaxed mb-10 md:mb-12 max-w-lg line-clamp-2 font-medium drop-shadow-md">
+                      {movie.overview}
+                    </p>
+
+                    <div className="flex flex-wrap items-center gap-5">
+                      <Button
+                        onClick={() => navigate(`/movie/${movie.id}`)}
+                        className="px-10 py-7 rounded-full bg-primary text-primary-foreground font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-primary/40 text-xs"
+                      >
+                        <Play className="w-5 h-5 fill-current" /> {t('common.viewDetails')}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={(e) => toggleFavorite(e, movie)}
+                        className={`px-10 py-7 rounded-full font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 border-2 text-xs ${
+                          isFavorite
+                            ? "bg-white text-black border-white hover:bg-white/90"
+                            : "bg-white/5 text-white border-white/20 hover:border-white hover:bg-white/10 backdrop-blur-sm"
+                        }`}
+                      >
+                        {isFavorite ? <Check className="w-5 h-5" /> : <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />}
+                        {isFavorite ? t('wishlist.inWishlist') || 'In Wishlist' : t('common.addToWishlist')}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Poster Card Area */}
+                  <div className="hidden md:flex flex-1 justify-end items-center z-10 animate-in fade-in slide-in-from-right-16 duration-1000 delay-300">
+                    <div className="relative group/poster transition-transform duration-700 hover:-translate-y-6 hover:scale-105">
+                      {/* Poster Glow */}
+                      <div className="absolute -inset-2 bg-primary/40 rounded-[2.5rem] blur-3xl group-hover/poster:bg-primary/60 transition-colors duration-700 opacity-50 group-hover/poster:opacity-80" />
+                      
+                      {/* Crisp Poster Image */}
+                      <div className="relative w-72 lg:w-85 aspect-[2/3] rounded-[2rem] overflow-hidden border border-white/20 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+                        {posterUrl ? (
+                          <img
+                            src={posterUrl}
+                            alt={movie.title}
+                            className="w-full h-full object-cover transition-transform duration-1000 group-hover/poster:scale-110"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-muted flex items-center justify-center">
+                            <span className="text-muted-foreground">No Poster</span>
+                          </div>
+                        )}
+                        {/* Glass Overlay on Poster */}
+                        <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent opacity-60" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
-        <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold text-foreground mb-3 md:mb-4 leading-tight">{movie.title}</h1>
-        <p className="text-muted-foreground text-sm md:text-base leading-relaxed mb-4 md:mb-6 line-clamp-3 md:line-clamp-4">{movie.overview}</p>
-        <div className="flex flex-wrap items-center gap-3 text-muted-foreground text-xs md:text-sm mb-4 md:mb-6">
-          <span>📅 {movie.release_date?.slice(0, 4)}</span>
-          <span>•</span>
-          <span>⭐ {movie.vote_average.toFixed(1)}</span>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Button
-            onClick={() => navigate(`/movie/${movie.id}`)}
-            className="w-full sm:w-auto px-6 py-4 md:py-6 rounded-lg text-primary-foreground bg-primary font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
-          >
-            <Play className="w-4 h-4 fill-current" /> {t('common.viewDetails')}
-          </Button>
-          <Button
-            variant={isFavorite ? "default" : "outline"}
-            onClick={toggleFavorite}
-            className={`w-full sm:w-auto px-6 py-4 md:py-6 rounded-lg font-semibold transition-all flex items-center justify-center ${isFavorite
-                ? "bg-primary text-primary-foreground border-primary"
-                : "text-foreground border-border bg-background/10 hover:bg-background/20"
-              }`}
-          >
-            {isFavorite ? <Check className="w-4 h-4 mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
-            {isFavorite ? t('wishlist.inWishlist') || 'In Wishlist' : t('common.addToWishlist')}
-          </Button>
-        </div>
+      </div>
+
+      {/* Pagination Dots */}
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-3 z-30">
+        {featuredMovies.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => emblaApi?.scrollTo(index)}
+            className={`h-1.5 transition-all duration-500 rounded-full ${
+              selectedIndex === index ? "w-8 bg-primary" : "w-2 bg-white/20 hover:bg-white/40"
+            }`}
+            aria-label={`Go to slide ${index + 1}`}
+          />
+        ))}
+      </div>
+
+      {/* Activate Windows Watermark */}
+      <div className="absolute bottom-6 right-6 pointer-events-none select-none z-50 opacity-30 text-left rtl:text-right">
+        <p className="text-[11px] font-normal text-white/70 leading-tight tracking-tight">
+          Activate Windows
+        </p>
+        <p className="text-[10px] font-normal text-white/50 tracking-tight">
+          Go to Settings to activate Windows.
+        </p>
       </div>
     </div>
   );
 }
+
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -113,11 +221,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-background transition-colors duration-300">
 
       {/* Hero Section */}
-      {!loadingPopular && heroMovie ? (
-        <HeroSection movie={heroMovie} />
-      ) : (
-        <div className="w-full h-[85vh] bg-muted animate-pulse" />
-      )}
+      <HeroSection movies={topRated} loading={loadingTop} />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-10">
