@@ -11,10 +11,13 @@ import { toast } from 'sonner';
 export function MovieCard({ movie }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { favorites, addToFavorites, removeFromFavorites } = useFavoritesStore();
+
+  const { addToFavorites, removeFromFavorites, favorites } = useFavoritesStore();
   const { isAuthenticated } = useAuthStore();
-  
+
+
   const favorite = favorites.some((m) => m.id === movie.id);
+
 
   const toggleFavorite = (e) => {
     e.stopPropagation();
@@ -23,7 +26,7 @@ export function MovieCard({ movie }) {
       navigate('/login');
       return;
     }
-    
+
     if (favorite) {
       removeFromFavorites(movie.id);
       toast.success(t('common.addToWishlist') + ' - Removed');
@@ -38,7 +41,7 @@ export function MovieCard({ movie }) {
     : 'https://via.placeholder.com/500x750?text=No+Image';
 
   return (
-    <div 
+    <div
       className="relative group rounded-xl overflow-hidden cursor-pointer w-full border border-border bg-card shadow-2xl transition-all duration-300 hover:shadow-primary/10"
       onClick={() => navigate(`/movie/${movie.id}`)}
     >
@@ -47,16 +50,15 @@ export function MovieCard({ movie }) {
         alt={movie.title}
         className="w-full aspect-[2/3] object-cover transition-transform duration-500 group-hover:scale-110"
       />
-      
+
       {/* Quick Action Overlay */}
       <div className="absolute top-2 right-2 z-10">
         <button
           onClick={toggleFavorite}
-          className={`p-2 rounded-full backdrop-blur-md transition-all duration-300 ${
-            favorite 
-            ? 'bg-primary text-primary-foreground' 
-            : 'bg-background/40 text-foreground/70 hover:bg-background/60 hover:text-foreground'
-          }`}
+          className={`p-2 rounded-full backdrop-blur-md transition-all duration-300 ${favorite
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-background/40 text-foreground/70 hover:bg-background/60 hover:text-foreground'
+            }`}
         >
           <Heart className={`w-4 h-4 ${favorite ? 'fill-current' : ''}`} />
         </button>
@@ -95,9 +97,9 @@ export function MovieRow({ title, movies, loading }) {
     const isRtl = document.documentElement.dir === 'rtl';
     const multiplier = isRtl ? -1 : 1;
     const scrollAmount = rowRef.current.clientWidth * 0.8 * multiplier;
-    rowRef.current.scrollBy({ 
-        left: direction === 'left' ? -scrollAmount : scrollAmount, 
-        behavior: 'smooth' 
+    rowRef.current.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth'
     });
   }
 
@@ -131,15 +133,15 @@ export function MovieRow({ title, movies, loading }) {
       >
         {loading
           ? Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="w-36 sm:w-44 shrink-0">
-                <SkeletonCard />
-              </div>
-            ))
+            <div key={i} className="w-36 sm:w-44 shrink-0">
+              <SkeletonCard />
+            </div>
+          ))
           : movies?.map((movie) => (
-              <div key={movie.id} className="w-36 sm:w-44 shrink-0">
-                <MovieCard movie={movie} />
-              </div>
-            ))
+            <div key={movie.id} className="w-36 sm:w-44 shrink-0">
+              <MovieCard movie={movie} />
+            </div>
+          ))
         }
       </div>
     </div>

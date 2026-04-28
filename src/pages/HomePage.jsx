@@ -13,6 +13,7 @@ import { useFavoritesStore } from '@/zustand/useFavoritesStore';
 import { useAuthStore } from '@/zustand/useAuthStore';
 import { toast } from 'sonner';
 
+
 function HeroSection({ movie }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -91,6 +92,7 @@ function HeroSection({ movie }) {
 }
 
 export default function HomePage() {
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const [page, setPage] = useState(1);
   const [selectedGenre, setSelectedGenre] = useState(null);
