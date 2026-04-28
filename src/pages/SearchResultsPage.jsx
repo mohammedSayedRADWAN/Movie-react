@@ -1,73 +1,65 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { Search } from 'lucide-react';
+import { Search, Loader2 } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import tmdb from '@/services/tmdb';
-
-import { MovieCard } from '@/components/MovieRow';
+import { MovieCard, SkeletonCard } from '@/components/MovieRow';
 
 export default function SearchResultsPage() {
   const { t } = useTranslation();
-  const [searchParams, setSearchParams] = useSearchParams();
-
+  const [searchParams] = useSearchParams();
   const query = searchParams.get('query') || '';
-  const page = Number(searchParams.get('page')) || 1;
   const debouncedQuery = useDebounce(query, 500);
 
   const [movies, setMovies] = useState([]);
   const [totalPages, setTotalPages] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  const handlePageChange = (newPage) => {
-    const params = new URLSearchParams(searchParams);
-    params.set('page', String(newPage));
-    setSearchParams(params);
-  };
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!debouncedQuery.trim()) {
-      setMovies([]);
-      return;
+        setMovies([]);
+        return;
     }
 
-    const fetchSearchResults = async () => {
+    async function fetchSearchResults() {
       try {
         setLoading(true);
-        setError('');
-
-        const response = await tmdb.get('/search/movie', {
-          params: {
-            query: debouncedQuery,
-            page,
-          },
+        setError(null);
+        const response = await tmdb.get('/search/multi', {
+          params: { query: debouncedQuery, page },
         });
 
-        setMovies(response.data.results || []);
-        setTotalPages(response.data.total_pages || 0);
+        // Filter and normalize results to only include movies and TV shows
+        const normalizedResults = response.data.results
+          .filter(item => item.media_type === 'movie' || item.media_type === 'tv')
+          .map(item => ({
+            ...item,
+            title: item.title || item.name,
+            release_date: item.release_date || item.first_air_date,
+          }));
+
+        setMovies(normalizedResults);
+        setTotalPages(response.data.total_pages);
       // eslint-disable-next-line no-unused-vars
       } catch (err) {
         setError(t('common.error'));
       } finally {
         setLoading(false);
       }
-    };
+    }
 
     fetchSearchResults();
   }, [debouncedQuery, page, t]);
 
+  // Reset page when query changes
   useEffect(() => {
-    const currentPage = searchParams.get('page');
-
-    if (debouncedQuery && currentPage !== '1') {
-      const params = new URLSearchParams(searchParams);
-      params.set('page', '1');
-      setSearchParams(params);
-    }
-  }, [debouncedQuery, searchParams, setSearchParams]);
+    setPage(1);
+  }, [debouncedQuery]);
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
@@ -87,7 +79,7 @@ export default function SearchResultsPage() {
         {!loading && !error && movies.length === 0 && query && (
           <div className="text-center py-24 bg-muted/20 rounded-3xl border border-border/50 backdrop-blur-sm">
             <div className="text-6xl mb-6 opacity-20">🎬</div>
-            <h3 className="text-2xl font-bold mb-2">No movies found</h3>
+            <h3 className="text-2xl font-bold mb-2">No results found</h3>
             <p className="text-muted-foreground">Try searching for something else</p>
           </div>
         )}
@@ -104,16 +96,17 @@ export default function SearchResultsPage() {
           {loading
             ? Array.from({ length: 15 }).map((_, i) => (
                 <div key={i} className="flex flex-col gap-3">
-                  <Skeleton className="aspect-[2/3] w-full rounded-xl" />
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-4 w-1/2" />
+                   <Skeleton className="aspect-[2/3] w-full rounded-xl" />
+                   <Skeleton className="h-4 w-3/4" />
+                   <Skeleton className="h-4 w-1/2" />
                 </div>
               ))
             : movies.map((movie) => (
                 <div key={movie.id} className="flex justify-center">
-                  <MovieCard movie={movie} />
+                    <MovieCard movie={movie} />
                 </div>
-              ))}
+            ))
+          }
         </div>
 
         {/* Pagination */}
@@ -121,24 +114,20 @@ export default function SearchResultsPage() {
           <div className="flex flex-col sm:flex-row justify-center items-center gap-6 mt-16 py-8 border-t border-border">
             <Button
               variant="outline"
-              onClick={() => handlePageChange(page - 1)}
+              onClick={() => setPage((p) => p - 1)}
               disabled={page === 1}
               className="px-8 font-bold border-border hover:bg-muted"
             >
               ← {t('common.prev')}
             </Button>
-
+            
             <span className="text-muted-foreground text-sm font-medium">
-              {t('common.page')}{' '}
-              <span className="text-foreground font-black text-lg mx-1">
-                {page}
-              </span>{' '}
-              {t('common.of')} {totalPages}
+              {t('common.page')} <span className="text-foreground font-black text-lg mx-1">{page}</span> {t('common.of')} {totalPages}
             </span>
-
+            
             <Button
               variant="outline"
-              onClick={() => handlePageChange(page + 1)}
+              onClick={() => setPage((p) => p + 1)}
               disabled={page === totalPages}
               className="px-8 font-bold border-border hover:bg-muted"
             >
@@ -146,6 +135,7 @@ export default function SearchResultsPage() {
             </Button>
           </div>
         )}
+
       </div>
     </div>
   );

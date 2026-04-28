@@ -19,6 +19,7 @@ const MovieDetailsPage = lazy(() => import('./pages/MovieDetailsPage'));
 const SearchResultsPage = lazy(() => import('./pages/SearchResultsPage'));
 const WishlistPage = lazy(() => import('./pages/WishlistPage'));
 const StoreManagement = lazy(() => import('./StoreManagement'));
+const PopularTVPage = lazy(() => import('./pages/PopularTVPage'));
 const NotFound404 = lazy(() => import('./pages/NotFound404'));
 
 const router = createBrowserRouter(
@@ -99,6 +100,22 @@ const router = createBrowserRouter(
 						</Suspense>
 					),
 				},
+				{
+					path: '/tv/:id',
+					element: (
+						<Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Spinner /></div>}>
+							<MovieDetailsPage />
+						</Suspense>
+					),
+				},
+				{
+					path: '/tv',
+					element: (
+						<Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Spinner /></div>}>
+							<PopularTVPage />
+						</Suspense>
+					),
+				},
 			],
 		},
 		{
@@ -119,4 +136,4 @@ createRoot(document.getElementById('root')).render(
 			</Provider>
 		</ThemeProvider>
 	</StrictMode>,
-);
+);

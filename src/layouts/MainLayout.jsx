@@ -7,7 +7,7 @@ import {
   NavigationMenuList,
 } from '@/components/ui/navigation-menu';
 import { Input } from '@/components/ui/input';
-import { Search, Heart, LogOut, User, Menu, Home } from 'lucide-react';
+import { Search, Heart, LogOut, User, Menu, Home, Play, Tv } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -84,6 +84,12 @@ export default function MainLayout() {
                 <NavigationMenuItem>
                   <Link to='/' className='text-sm text-muted-foreground hover:text-foreground font-bold transition-colors uppercase tracking-wider'>
                     {t('nav.home')}
+                  </Link>
+                </NavigationMenuItem>
+
+                <NavigationMenuItem>
+                  <Link to='/tv' className='text-sm text-muted-foreground hover:text-foreground font-bold transition-colors uppercase tracking-wider'>
+                    {t('nav.tv')}
                   </Link>
                 </NavigationMenuItem>
 
@@ -179,6 +185,10 @@ export default function MainLayout() {
                   <div className="flex flex-col gap-4 text-left rtl:text-right">
                     <Link to='/' onClick={() => setIsMobileMenuOpen(false)} className='flex items-center gap-3 text-sm text-muted-foreground hover:text-foreground font-bold transition-colors uppercase tracking-wider p-2 rounded-lg hover:bg-muted'>
                       <Home className="w-4 h-4" /> {t('nav.home')}
+                    </Link>
+
+                    <Link to='/tv' onClick={() => setIsMobileMenuOpen(false)} className='flex items-center gap-3 text-sm text-muted-foreground hover:text-foreground font-bold transition-colors uppercase tracking-wider p-2 rounded-lg hover:bg-muted'>
+                      <Tv className="w-4 h-4" /> {t('nav.tv')}
                     </Link>
 
                     <Link to='wishlist' onClick={() => setIsMobileMenuOpen(false)} className='flex items-center gap-3 text-sm text-muted-foreground hover:text-foreground font-bold transition-colors uppercase tracking-wider p-2 rounded-lg hover:bg-muted'>

@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { useParams, useNavigate } from 'react-router';
+import { useParams, useNavigate, useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
     Star,
@@ -40,11 +40,14 @@ const MovieDetailsPage = () => {
     const { t } = useTranslation();
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
+    const isTV = location.pathname.startsWith('/tv');
+    const mediaType = isTV ? 'tv' : 'movie';
 
-    const { movie, loading: loadingMovie, error: movieError } = useMovieDetails(id);
-    const { credits } = useMovieCredits(id);
-    const { movies: similarMovies, loading: loadingSimilar } = useSimilarMovies(id);
-    const { videos } = useMovieVideos(id);
+    const { movie, loading: loadingMovie, error: movieError } = useMovieDetails(id, mediaType);
+    const { credits } = useMovieCredits(id, mediaType);
+    const { movies: similarMovies, loading: loadingSimilar } = useSimilarMovies(id, mediaType);
+    const { videos } = useMovieVideos(id, mediaType);
 
     const { favorites, addToFavorites, removeFromFavorites } = useFavoritesStore();
     const { isAuthenticated } = useAuthStore();
@@ -154,15 +157,17 @@ const MovieDetailsPage = () => {
                                 <span className="text-muted-foreground text-sm">• {movie.vote_count} votes</span>
                             </div>
 
-                            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-tight">{movie.title}</h1>
+                            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-tight">
+                                {isTV ? movie.name : movie.title}
+                            </h1>
                             {movie.tagline && (
                                 <p className="text-lg sm:text-xl text-muted-foreground italic">"{movie.tagline}"</p>
                             )}
                         </div>
 
                         <div className="flex flex-wrap items-center gap-6 text-sm font-semibold text-muted-foreground">
-                            <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4 text-primary" /> {movie.release_date?.slice(0, 4)}</span>
-                            <span className="flex items-center gap-1.5"><Clock className="w-4 h-4 text-primary" /> {movie.runtime} {t('movie.runtime')}</span>
+                            <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4 text-primary" /> {isTV ? movie.first_air_date?.slice(0, 4) : movie.release_date?.slice(0, 4)}</span>
+                            <span className="flex items-center gap-1.5"><Clock className="w-4 h-4 text-primary" /> {isTV ? movie.episode_run_time?.[0] || 'N/A' : movie.runtime} {t('movie.runtime')}</span>
                             <div className="flex flex-wrap gap-2">
                                 {movie.genres?.map(genre => (
                                     <span key={genre.id} className="px-3 py-1 bg-muted rounded-full text-xs hover:bg-muted/80 transition-colors">
@@ -182,7 +187,7 @@ const MovieDetailsPage = () => {
                                 <DialogContent className="max-w-4xl bg-background border-border p-0 overflow-hidden sm:max-w-4xl">
                                     <DialogHeader className="p-4 bg-muted">
                                         <DialogTitle className="text-foreground flex items-center gap-2">
-                                            <Video className="w-5 h-5 text-primary" /> {movie.title} - Official Trailer
+                                            <Video className="w-5 h-5 text-primary" /> {isTV ? movie.name : movie.title} - Official Trailer
                                         </DialogTitle>
                                     </DialogHeader>
                                     <div className="aspect-video w-full">
@@ -246,17 +251,33 @@ const MovieDetailsPage = () => {
                                 <span className="font-semibold text-green-500">{movie.status}</span>
                             </div>
                             <div className="flex justify-between items-center pb-4 border-b border-border">
-                                <span className="text-muted-foreground text-sm">{t('movie.releaseDate')}</span>
-                                <span className="font-semibold">{movie.release_date}</span>
+                                <span className="text-muted-foreground text-sm">{isTV ? 'First Air Date' : t('movie.releaseDate')}</span>
+                                <span className="font-semibold">{isTV ? movie.first_air_date : movie.release_date}</span>
                             </div>
-                            <div className="flex justify-between items-center pb-4 border-b border-border">
-                                <span className="text-muted-foreground text-sm">{t('movie.budget')}</span>
-                                <span className="font-semibold">${(movie.budget / 1000000).toFixed(1)}M</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-muted-foreground text-sm">{t('movie.revenue')}</span>
-                                <span className="font-semibold">${(movie.revenue / 1000000).toFixed(1)}M</span>
-                            </div>
+                            {!isTV && (
+                                <>
+                                    <div className="flex justify-between items-center pb-4 border-b border-border">
+                                        <span className="text-muted-foreground text-sm">{t('movie.budget')}</span>
+                                        <span className="font-semibold">${(movie.budget / 1000000).toFixed(1)}M</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-muted-foreground text-sm">{t('movie.revenue')}</span>
+                                        <span className="font-semibold">${(movie.revenue / 1000000).toFixed(1)}M</span>
+                                    </div>
+                                </>
+                            )}
+                            {isTV && (
+                                <>
+                                    <div className="flex justify-between items-center pb-4 border-b border-border">
+                                        <span className="text-muted-foreground text-sm">Seasons</span>
+                                        <span className="font-semibold">{movie.number_of_seasons}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-muted-foreground text-sm">Episodes</span>
+                                        <span className="font-semibold">{movie.number_of_episodes}</span>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 </section>

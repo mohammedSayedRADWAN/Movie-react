@@ -8,6 +8,7 @@ const resources = {
       "nav": {
         "home": "Home",
         "movies": "Movies",
+        "tv": "TV Shows",
         "users": "Users",
         "wishlist": "Wishlist",
         "login": "Login",
@@ -108,6 +109,7 @@ const resources = {
       "nav": {
         "home": "الرئيسية",
         "movies": "الأفلام",
+        "tv": "المسلسلات",
         "users": "المستخدمين",
         "wishlist": "قائمة الأمنيات",
         "login": "تسجيل الدخول",

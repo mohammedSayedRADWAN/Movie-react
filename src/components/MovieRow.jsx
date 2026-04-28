@@ -43,7 +43,7 @@ export function MovieCard({ movie }) {
   return (
     <div
       className="relative group rounded-xl overflow-hidden cursor-pointer w-full border border-border bg-card shadow-2xl transition-all duration-300 hover:shadow-primary/10"
-      onClick={() => navigate(`/movie/${movie.id}`)}
+      onClick={() => navigate(`/${movie.media_type || 'movie'}/${movie.id}`)}
     >
       <img
         src={imageUrl}
