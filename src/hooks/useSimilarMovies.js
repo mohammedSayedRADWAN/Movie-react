@@ -26,7 +26,6 @@ export function useSimilarMovies(id, mediaType = 'movie') {
         }
 
         setMovies(results);
-      // eslint-disable-next-line no-unused-vars
       } catch (err) {
         setError(`Failed to load similar ${mediaType}s.`);
       } finally {
