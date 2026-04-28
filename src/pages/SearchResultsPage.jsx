@@ -1,54 +1,73 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { Search, Loader2 } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import tmdb from '@/services/tmdb';
-import { MovieCard, SkeletonCard } from '@/components/MovieRow';
+
+import { MovieCard } from '@/components/MovieRow';
 
 export default function SearchResultsPage() {
   const { t } = useTranslation();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const query = searchParams.get('query') || '';
+  const page = Number(searchParams.get('page')) || 1;
   const debouncedQuery = useDebounce(query, 500);
 
   const [movies, setMovies] = useState([]);
   const [totalPages, setTotalPages] = useState(0);
-  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState('');
+
+  const handlePageChange = (newPage) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('page', String(newPage));
+    setSearchParams(params);
+  };
 
   useEffect(() => {
     if (!debouncedQuery.trim()) {
-        setMovies([]);
-        return;
+      setMovies([]);
+      return;
     }
 
-    async function fetchSearchResults() {
+    const fetchSearchResults = async () => {
       try {
         setLoading(true);
-        setError(null);
+        setError('');
+
         const response = await tmdb.get('/search/movie', {
-          params: { query: debouncedQuery, page },
+          params: {
+            query: debouncedQuery,
+            page,
+          },
         });
-        setMovies(response.data.results);
-        setTotalPages(response.data.total_pages);
+
+        setMovies(response.data.results || []);
+        setTotalPages(response.data.total_pages || 0);
+      // eslint-disable-next-line no-unused-vars
       } catch (err) {
         setError(t('common.error'));
       } finally {
         setLoading(false);
       }
-    }
+    };
 
     fetchSearchResults();
   }, [debouncedQuery, page, t]);
 
-  // Reset page when query changes
   useEffect(() => {
-    setPage(1);
-  }, [debouncedQuery]);
+    const currentPage = searchParams.get('page');
+
+    if (debouncedQuery && currentPage !== '1') {
+      const params = new URLSearchParams(searchParams);
+      params.set('page', '1');
+      setSearchParams(params);
+    }
+  }, [debouncedQuery, searchParams, setSearchParams]);
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
@@ -85,17 +104,16 @@ export default function SearchResultsPage() {
           {loading
             ? Array.from({ length: 15 }).map((_, i) => (
                 <div key={i} className="flex flex-col gap-3">
-                   <Skeleton className="aspect-[2/3] w-full rounded-xl" />
-                   <Skeleton className="h-4 w-3/4" />
-                   <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="aspect-[2/3] w-full rounded-xl" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
                 </div>
               ))
             : movies.map((movie) => (
                 <div key={movie.id} className="flex justify-center">
-                    <MovieCard movie={movie} />
+                  <MovieCard movie={movie} />
                 </div>
-            ))
-          }
+              ))}
         </div>
 
         {/* Pagination */}
@@ -103,20 +121,24 @@ export default function SearchResultsPage() {
           <div className="flex flex-col sm:flex-row justify-center items-center gap-6 mt-16 py-8 border-t border-border">
             <Button
               variant="outline"
-              onClick={() => setPage((p) => p - 1)}
+              onClick={() => handlePageChange(page - 1)}
               disabled={page === 1}
               className="px-8 font-bold border-border hover:bg-muted"
             >
               ← {t('common.prev')}
             </Button>
-            
+
             <span className="text-muted-foreground text-sm font-medium">
-              {t('common.page')} <span className="text-foreground font-black text-lg mx-1">{page}</span> {t('common.of')} {totalPages}
+              {t('common.page')}{' '}
+              <span className="text-foreground font-black text-lg mx-1">
+                {page}
+              </span>{' '}
+              {t('common.of')} {totalPages}
             </span>
-            
+
             <Button
               variant="outline"
-              onClick={() => setPage((p) => p + 1)}
+              onClick={() => handlePageChange(page + 1)}
               disabled={page === totalPages}
               className="px-8 font-bold border-border hover:bg-muted"
             >
@@ -124,7 +146,6 @@ export default function SearchResultsPage() {
             </Button>
           </div>
         )}
-
       </div>
     </div>
   );
