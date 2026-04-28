@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import tmdb from '@/services/tmdb';
 
-export function usePopularTV(page = 1) {
+export function usePopularTV(page = 1, sortBy = 'popularity.desc') {
   const [tvShows, setTvShows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -13,9 +13,13 @@ export function usePopularTV(page = 1) {
         setLoading(true);
         setError(null);
         
-        const response = await tmdb.get('/tv/popular', {
+        // Use /discover/tv for advanced sorting, or /tv/popular for the default view
+        // Actually /discover/tv with popularity.desc is equivalent to /tv/popular
+        const endpoint = sortBy ? '/discover/tv' : '/tv/popular';
+        const response = await tmdb.get(endpoint, {
           params: {
             page,
+            sort_by: sortBy,
             language: document.documentElement.lang || 'en',
           },
         });
@@ -31,15 +35,15 @@ export function usePopularTV(page = 1) {
         setTvShows(normalizedData);
         setTotalPages(Math.min(response.data.total_pages, 500)); // TMDB limits to 500 pages
       } catch (err) {
-        console.error('Failed to load popular TV shows', err);
-        setError('Failed to fetch popular TV shows. Please try again later.');
+        console.error('Failed to load TV shows', err);
+        setError('Failed to fetch TV shows. Please try again later.');
       } finally {
         setLoading(false);
       }
     }
 
     fetchPopularTV();
-  }, [page]);
+  }, [page, sortBy]);
 
   return { tvShows, loading, error, totalPages };
 }

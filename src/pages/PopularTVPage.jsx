@@ -1,32 +1,95 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePopularTV } from '@/hooks/usePopularTV';
 import { SkeletonCard } from '@/components/MovieRow';
 import { Button } from '@/components/ui/button';
-import { Play } from 'lucide-react';
-import { useNavigate } from 'react-router';
+import { Play, ListFilter } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router';
+
+const SORT_OPTIONS = [
+  { id: 'popularity.desc', label: 'popularity' },
+  { id: 'vote_average.desc', label: 'rating' },
+  { id: 'first_air_date.desc', label: 'newest' },
+];
 
 export default function PopularTVPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [page, setPage] = useState(1);
-  const { tvShows, loading, error, totalPages } = usePopularTV(page);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [page, setPage] = useState(parseInt(searchParams.get('page')) || 1);
+  const sortBy = searchParams.get('sort_by') || 'popularity.desc';
+  
+  const { tvShows, loading, error, totalPages } = usePopularTV(page, sortBy);
+
+  const handleSortChange = (newSort) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('sort_by', newSort);
+    params.set('page', '1');
+    setSearchParams(params);
+    setPage(1);
+  };
+
+  const handlePageChange = (newPage) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('page', newPage.toString());
+    setSearchParams(params);
+    setPage(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    const urlPage = parseInt(searchParams.get('page'));
+    if (urlPage && urlPage !== page) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPage(urlPage);
+    }
+  }, [searchParams]);
 
   return (
     <div className="min-h-screen bg-background transition-colors duration-300 pt-24 pb-12">
       <div className="max-w-7xl mx-auto px-4">
         
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          <div className="flex items-center gap-3">
-            <div className="w-2 h-8 rounded-full bg-primary" />
-            <h1 className="text-3xl md:text-4xl font-black text-foreground uppercase tracking-tight">
-              {t('nav.tv')}
-            </h1>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-2 h-8 rounded-full bg-primary" />
+              <h1 className="text-3xl md:text-5xl font-black text-foreground uppercase tracking-tight">
+                {t('nav.tv')}
+              </h1>
+            </div>
+            <p className="text-muted-foreground font-medium text-lg">
+              {t('home.popularNow')} {t('nav.tv')}
+            </p>
           </div>
-          <p className="text-muted-foreground font-medium">
-            {t('home.popularNow')} {t('nav.tv')}
-          </p>
+
+          {/* Sorting Section */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-card/50 p-2 rounded-2xl border border-border/50 backdrop-blur-sm">
+            <div className="flex items-center gap-2 px-3 text-muted-foreground">
+              <ListFilter className="w-4 h-4" />
+              <span className="text-sm font-bold uppercase tracking-wider whitespace-nowrap">
+                {t('common.sortBy')}:
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {SORT_OPTIONS.map((option) => (
+                <Button
+                  key={option.id}
+                  variant={sortBy === option.id ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handleSortChange(option.id)}
+                  className={`rounded-full px-5 font-bold transition-all duration-300 ${
+                    sortBy === option.id 
+                      ? 'shadow-lg shadow-primary/20 scale-105' 
+                      : 'hover:border-primary/50'
+                  }`}
+                  aria-selected={sortBy === option.id}
+                >
+                  {t(`common.${option.label}`)}
+                </Button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Error State */}
@@ -82,10 +145,7 @@ export default function PopularTVPage() {
         {!loading && !error && tvShows.length > 0 && (
           <div className="flex flex-wrap justify-center items-center gap-4 mt-12">
             <Button
-              onClick={() => {
-                setPage((p) => p - 1);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
+              onClick={() => handlePageChange(page - 1)}
               disabled={page === 1}
               variant="outline"
               className="px-8 py-6 rounded-full font-bold uppercase tracking-widest border-2 transition-all hover:bg-primary hover:text-primary-foreground hover:border-primary disabled:opacity-50"
@@ -100,10 +160,7 @@ export default function PopularTVPage() {
             </div>
 
             <Button
-              onClick={() => {
-                setPage((p) => p + 1);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
+              onClick={() => handlePageChange(page + 1)}
               disabled={page === totalPages}
               variant="outline"
               className="px-8 py-6 rounded-full font-bold uppercase tracking-widest border-2 transition-all hover:bg-primary hover:text-primary-foreground hover:border-primary disabled:opacity-50"
